@@ -4,11 +4,19 @@ Flow field using Perlin noise for organic particle movement.
 A 2D grid of angle vectors is populated each frame using 3D Perlin noise
 (x, y, time). Bilinear interpolation ensures smooth trajectories between
 grid cells.
+
+V2 additions:
+- enabled toggle for debugging
+- get_force() as the canonical public interface
+- Parameters aligned with Config
 """
 
 import math
+from typing import Optional
 
 import py5
+
+from config import Config
 
 
 class FlowField:
@@ -16,16 +24,22 @@ class FlowField:
 
     The field is sampled from py5.noise() in 3D: (col * ns, row * ns, time).
     The time dimension creates smooth animation over frames.
+
+    Public interface:
+        update(time)    — recalculate all flow vectors
+        get_force(x, y) — interpolated force at arbitrary position
+        toggle()        — enable/disable the field
     """
 
     def __init__(
         self,
-        width: int,
-        height: int,
-        cell_size: int = 25,
-        noise_scale: float = 0.004,
-        time_scale: float = 0.008,
-        flow_strength: float = 0.35,
+        width: int = Config.WIDTH,
+        height: int = Config.HEIGHT,
+        cell_size: int = Config.FLOW_CELL_SIZE,
+        noise_scale: float = Config.FLOW_NOISE_SCALE,
+        time_scale: float = Config.FLOW_NOISE_SPEED,
+        flow_strength: float = Config.FLOW_STRENGTH,
+        enabled: bool = Config.FLOW_ENABLED,
     ) -> None:
         """Initialize the flow field grid.
 
@@ -38,6 +52,7 @@ class FlowField:
                 swirls, larger = more chaotic.
             time_scale: Temporal evolution rate. Smaller = slower evolution.
             flow_strength: Base magnitude of flow vectors (0.0–1.0).
+            enabled: Whether the flow field is active.
         """
         self.cell_size = cell_size
         self.cols = int(width / cell_size) + 1
@@ -45,6 +60,7 @@ class FlowField:
         self.noise_scale = noise_scale
         self.time_scale = time_scale
         self.flow_strength = flow_strength
+        self.enabled = enabled
 
         # Grid of (vx, vy) tuples
         self._field: list[tuple[float, float]] = [
@@ -54,10 +70,16 @@ class FlowField:
     def update(self, time: float) -> None:
         """Recalculate all flow vectors for the given time.
 
+        When disabled, this is a no-op — the field remains at its last
+        computed state.
+
         Args:
             time: Monotonic time value in seconds
                 (e.g., py5.millis() / 1000.0).
         """
+        if not self.enabled:
+            return
+
         ns = self.noise_scale
         ts = self.time_scale
 
@@ -76,22 +98,33 @@ class FlowField:
                 vy = math.sin(angle) * self.flow_strength
                 self._field[idx] = (vx, vy)
 
-    def lookup(self, x: float, y: float) -> tuple[float, float]:
-        """Look up the flow vector at an arbitrary position.
+    def get_force(self, x: float, y: float) -> tuple[float, float]:
+        """Get the flow force vector at an arbitrary position.
 
-        Uses bilinear interpolation between the four nearest grid cells
-        for smooth, continuous trajectories.
+        Canonical public interface. When the field is disabled, returns
+        zero force. Uses bilinear interpolation between the four nearest
+        grid cells for smooth, continuous trajectories.
 
         Args:
             x: X position in pixels.
             y: Y position in pixels.
 
         Returns:
-            (vx, vy) interpolated flow vector.
+            (vx, vy) interpolated flow vector, or (0.0, 0.0) if disabled.
+        """
+        if not self.enabled:
+            return (0.0, 0.0)
+
+        return self._lookup(x, y)
+
+    def _lookup(self, x: float, y: float) -> tuple[float, float]:
+        """Bilinear interpolation of flow vectors at (x, y).
+
+        Internal implementation — use get_force() as the public API.
         """
         cs = self.cell_size
 
-        # Clamp to grid bounds (slightly inside to avoid out-of-bounds)
+        # Clamp to grid bounds
         col_f = max(0.0, min(float(self.cols - 1.001), x / cs))
         row_f = max(0.0, min(float(self.rows - 1.001), y / cs))
 
@@ -100,7 +133,7 @@ class FlowField:
         col1 = min(col0 + 1, self.cols - 1)
         row1 = min(row0 + 1, self.rows - 1)
 
-        # Fractional offsets for interpolation
+        # Fractional offsets
         fx = col_f - col0
         fy = row_f - row0
 
@@ -129,3 +162,14 @@ class FlowField:
     def _get(self, col: int, row: int) -> tuple[float, float]:
         """Get the flow vector at a specific grid cell."""
         return self._field[row * self.cols + col]
+
+    # ---- Backward compatibility ----
+    def lookup(self, x: float, y: float) -> tuple[float, float]:
+        """Deprecated alias for get_force(). Kept for backward compatibility."""
+        return self.get_force(x, y)
+
+    # ---- Debug ----
+    def toggle(self) -> bool:
+        """Toggle the flow field on/off. Returns new state."""
+        self.enabled = not self.enabled
+        return self.enabled
