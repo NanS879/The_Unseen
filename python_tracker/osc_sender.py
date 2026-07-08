@@ -1,53 +1,60 @@
 """
-OSC sender module for transmitting hand data to the py5 visual renderer.
+OSC sender module for transmitting dual-hand data to the py5 visual renderer.
 
-Sends a single composite OSC message per frame to ensure atomicity:
-    /hand  [hand_x, hand_y, hand_speed, hand_detected]
+Sends per-hand OSC messages:
+    /hand/left   [hand_x, hand_y, hand_speed, hand_detected]
+    /hand/right  [hand_x, hand_y, hand_speed, hand_detected]
 
-All values are floats. hand_detected is 1.0 or 0.0.
+When no hands are detected, sends a single /hand/none message
+so the visual side knows the tracker is alive.
 """
 
 from pythonosc import udp_client
 
 
 class OscHandSender:
-    """Lightweight OSC client that sends hand data over UDP.
-
-    Uses SimpleUDPClient — synchronous, fire-and-forget, sufficient for
-    30fps real-time transmission on localhost.
-    """
+    """Lightweight OSC client that sends dual-hand data over UDP."""
 
     def __init__(
         self, ip: str = "127.0.0.1", port: int = 12000
     ) -> None:
-        """Initialize the OSC UDP client.
-
-        Args:
-            ip: Target IP address. Use 127.0.0.1 for same-machine.
-            port: Target UDP port.
-        """
         self._ip = ip
         self._port = port
         self._client = udp_client.SimpleUDPClient(ip, port)
-        print(f"[OSC] Sender ready → {ip}:{port}")
+        print(f"[OSC] Sender ready -> {ip}:{port}")
 
-    def send_hand_data(self, hand_data: dict) -> None:
-        """Send hand data as an OSC message.
+    def send_hand_data(self, hands_data: list[dict]) -> None:
+        """Send hand data for all detected hands as per-hand OSC messages.
 
         Args:
-            hand_data: Dictionary from HandTracker.process_frame() with keys
-                hand_x, hand_y, hand_speed, hand_detected.
+            hands_data: List of hand dicts from HandTracker.process_frame(),
+                each with keys hand_x, hand_y, hand_speed, hand_side,
+                hand_detected.
         """
-        self._client.send_message(
-            "/hand",
-            [
-                float(hand_data["hand_x"]),
-                float(hand_data["hand_y"]),
-                float(hand_data["hand_speed"]),
-                float(hand_data["hand_detected"]),
-            ],
-        )
+        sent_sides: set[str] = set()
+
+        for hand in hands_data:
+            side = hand["hand_side"].lower()  # "left" or "right"
+            addr = f"/hand/{side}"
+            self._client.send_message(
+                addr,
+                [
+                    float(hand["hand_x"]),
+                    float(hand["hand_y"]),
+                    float(hand["hand_speed"]),
+                    float(hand["hand_detected"]),
+                ],
+            )
+            sent_sides.add(side)
+
+        # For sides not detected, send a "not detected" message
+        for side in ("left", "right"):
+            if side not in sent_sides:
+                self._client.send_message(
+                    f"/hand/{side}",
+                    [0.0, 0.0, 0.0, 0.0],  # hand_detected=0.0 signals absence
+                )
 
     def close(self) -> None:
-        """Release resources (UDP client is stateless, nothing to do)."""
+        """Release resources (UDP client is stateless)."""
         pass

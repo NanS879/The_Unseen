@@ -15,9 +15,14 @@ import math
 class Particle:
     """A single glowing particle with life-cycle management.
 
-    Particles follow the flow field, respond to hand gravity, fade with age,
-    and respawn at random positions when their life expires.
+    Particles follow the flow field, respond to dual-hand gravity,
+    fade with age, and respawn at random positions when their life expires.
     """
+
+    # Color presets
+    COOL = (180, 210, 255)        # No hand — cool blue-white
+    RIGHT_WARM = (255, 200, 100)  # Right hand — warm gold
+    LEFT_WARM = (255, 150, 255)   # Left hand — cool magenta
 
     def __init__(self, width: int, height: int) -> None:
         """Create a particle at a random position within the canvas.
@@ -42,6 +47,11 @@ class Particle:
         # Previous position for trail rendering
         self.prev_x = self.position[0]
         self.prev_y = self.position[1]
+
+        # Burst color override (set by _spawn_burst for trail particles)
+        self.burst_r: float = 255.0
+        self.burst_g: float = 200.0
+        self.burst_b: float = 100.0
 
     def apply_force(self, fx: float, fy: float) -> None:
         """Accumulate a force vector onto the particle's acceleration.
@@ -154,29 +164,9 @@ class Particle:
         """Return life as a 0.0–1.0 ratio for alpha/color calculations."""
         return max(0.0, min(1.0, self.life / self.max_life))
 
-    def display(self, py5, near_hand: float = 0.0) -> None:
-        """Render the particle with a glow effect.
-
-        Draws three concentric circles: bright core, mid glow, soft halo.
-        Colors shift toward warm tones when near_hand > 0.
-
-        Args:
-            py5: The py5 module/sketch for drawing calls.
-            near_hand: 0.0–1.0 color-shift factor (1.0 = full warm color).
-        """
-        lr = self.life_ratio()
-        x = self.position[0]
-        y = self.position[1]
-        r = self.size
-
-        # Compute color: cool blue-white by default, warm gold near hand
-        r_cool, g_cool, b_cool = 180, 210, 255
-        r_warm, g_warm, b_warm = 255, 200, 140
-
-        rr = r_cool + (r_warm - r_cool) * near_hand
-        gg = g_cool + (g_warm - g_cool) * near_hand
-        bb = b_cool + (b_warm - b_cool) * near_hand
-
+    def _draw_glow(self, py5, rr: float, gg: float, bb: float, lr: float,
+                   x: float, y: float, r: float) -> None:
+        """Draw the 4-layer glow for a particle (shared by display methods)."""
         # Outer halo — large, soft glow
         py5.no_stroke()
         py5.fill(rr, gg, bb, 18.0 * lr)
@@ -193,3 +183,57 @@ class Particle:
         # Hot center — white
         py5.fill(255, 255, 255, 220.0 * lr)
         py5.circle(x, y, r * 0.5)
+
+    def display(self, py5, near_hand: float = 0.0) -> None:
+        """Render trail/burst particle with its stored burst color.
+
+        Used by trail particles spawned during burst mode.
+
+        Args:
+            py5: The py5 module/sketch for drawing calls.
+            near_hand: Unused (kept for API compatibility).
+        """
+        lr = self.life_ratio()
+        self._draw_glow(py5, self.burst_r, self.burst_g, self.burst_b,
+                        lr, self.position[0], self.position[1], self.size)
+
+    def display_dual(self, py5, near_hand: float = 0.0,
+                     near_left: float = 0.0, near_right: float = 0.0) -> None:
+        """Render the particle with dual-hand color blending.
+
+        Colors blend between:
+        - Cool blue-white (no hand proximity)
+        - Warm gold      (near right hand)
+        - Cool magenta   (near left hand)
+
+        When both hands are near, colors mix additively, creating a
+        warm white-pink zone between the hands.
+
+        Args:
+            py5: The py5 module/sketch for drawing calls.
+            near_hand: Overall proximity (for brightness boost).
+            near_left: 0.0–1.0 proximity to left hand.
+            near_right: 0.0–1.0 proximity to right hand.
+        """
+        lr = self.life_ratio()
+        x = self.position[0]
+        y = self.position[1]
+        r = self.size
+
+        # Blend: cool base + right-hand warm shift + left-hand magenta shift
+        rr = (self.COOL[0]
+              + (self.RIGHT_WARM[0] - self.COOL[0]) * near_right
+              + (self.LEFT_WARM[0] - self.COOL[0]) * near_left)
+        gg = (self.COOL[1]
+              + (self.RIGHT_WARM[1] - self.COOL[1]) * near_right
+              + (self.LEFT_WARM[1] - self.COOL[1]) * near_left)
+        bb = (self.COOL[2]
+              + (self.RIGHT_WARM[2] - self.COOL[2]) * near_right
+              + (self.LEFT_WARM[2] - self.COOL[2]) * near_left)
+
+        # Clamp
+        rr = max(0.0, min(255.0, rr))
+        gg = max(0.0, min(255.0, gg))
+        bb = max(0.0, min(255.0, bb))
+
+        self._draw_glow(py5, rr, gg, bb, lr, x, y, r)
