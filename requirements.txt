@@ -1,9 +1,5 @@
-# The Unseen — 统一依赖文件
-# 手部追踪 (python_tracker)
+# The Unseen — Dependencies
 opencv-python>=4.8.0
 mediapipe>=0.10.14
-# 生成艺术渲染 (py5_visual)
 py5>=0.10.0
-# 共享依赖
 numpy>=1.26.0
-python-osc>=1.8.0

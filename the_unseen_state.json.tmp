@@ -1,19 +1,19 @@
 {
   "version": 3,
-  "saved_at": 1783568829.2787962,
-  "saved_at_iso": "2026-07-09T11:47:09",
+  "saved_at": 1783581109.7882261,
+  "saved_at_iso": "2026-07-09T15:11:49",
   "energy": {
-    "energy": 74.9344657153449
+    "energy": 51.04926334886432
   },
   "behavior": {
-    "total_distance": 61654.98944132173,
-    "avg_speed": 0.16909269547814523,
-    "speed_samples": 6995,
-    "total_dwell_time": 23.348000000000003,
-    "total_active_time": 276.5460000000005,
-    "total_idle_time": 77.09299999999999,
-    "seed_count": 14,
-    "interaction_count": 32,
+    "total_distance": 173369.18937075476,
+    "avg_speed": 0.15253621841213844,
+    "speed_samples": 17807,
+    "total_dwell_time": 76.416458289699,
+    "total_active_time": 789.6222393902942,
+    "total_idle_time": 303.78669921347307,
+    "seed_count": 38,
+    "interaction_count": 73,
     "session_start": 1783562188.0587387
   },
   "ecosystem": {
