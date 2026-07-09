@@ -3,7 +3,6 @@
 ---
 
 <div align="center">
-  <img src="docs/hero.png" alt="Hero" width="800" />
   <p><em>不是工具，不是助手——而是一个会呼吸、会思考、会记忆的人工意识世界。</em></p>
 </div>
 
