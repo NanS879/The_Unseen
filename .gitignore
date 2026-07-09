@@ -1,9 +1,9 @@
-# 虚拟环境
+# Virtual environment
 .venv/
 venv/
 env/
 
-# Python 缓存
+# Python
 __pycache__/
 *.py[cod]
 *.pyo
@@ -17,7 +17,24 @@ build/
 *.swp
 *.swo
 
-# 系统文件
+# OS
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# API keys (never commit)
+config.json
+
+# Runtime state (never commit)
+the_unseen_state.json
+the_unseen_state.json.tmp
+world_memory.json
+
+# Generated media (never commit)
+*.mp4
+*.png
+*.jpg
+*.gif
+
+# Test output
+seedance_output.*

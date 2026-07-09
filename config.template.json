@@ -1,0 +1,27 @@
+{
+  "api": {
+    "language": {
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "api_key": "",
+      "endpoint": "https://api.deepseek.com/v1/chat/completions",
+      "cooldown_seconds": 25,
+      "timeout_seconds": 8
+    },
+    "vision": {
+      "provider": "doubao",
+      "model": "doubao-seedance-1.0-pro-250528",
+      "api_key": "",
+      "endpoint": "https://ark.cn-beijing.volces.com/api/v3/chat/completions",
+      "cooldown_seconds": 30,
+      "timeout_seconds": 10
+    }
+  },
+  "project": {
+    "name": "The Unseen",
+    "version": "8.0"
+  },
+  "debug": {
+    "log_level": "DEBUG"
+  }
+}

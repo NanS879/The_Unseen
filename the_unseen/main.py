@@ -257,8 +257,13 @@ def draw_debug_overlay(py5, active_hands: list[HandState]) -> None:
 
 # ── Quit ────────────────────────────────────────────
 
-def on_quit(py5) -> None:
-    """Clean shutdown: save, release camera, print report."""
+def on_quit(py5, after_save=None) -> None:
+    """Clean shutdown: save, release camera, print report.
+
+    Args:
+        py5: py5 sketch instance.
+        after_save: Optional callback called after state is saved.
+    """
     try:
         if S.energy_manager and S.organism_manager:
             save_state(save_path(), S.energy_manager, S.behavior_analyzer,
@@ -282,6 +287,9 @@ def on_quit(py5) -> None:
         print(f"  Organisms:      {orgs}")
         print(f"  Fragments:      {frags}")
         print("=" * 50)
+        # V8 World Brain hook
+        if after_save:
+            after_save(stats)
     log("Exit", "Goodbye.")
     py5.exit_sketch()
 

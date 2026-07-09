@@ -1,185 +1,379 @@
+<div align="center">
+
 # The Unseen · 不可见
 
-> "人无法直接看到自己的存在，但世界始终记录着人的影响。"
-> "People cannot directly see their own existence, but the world always records their impact."
+*A living digital ecosystem that sees you, remembers you, and grows because of you.*
 
-## 项目简介
+[![Python](https://img.shields.io/badge/Python-3.12-blue?logo=python)](https://python.org)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+[![MediaPipe](https://img.shields.io/badge/Perception-MediaPipe-orange)](https://developers.google.com/mediapipe)
+[![py5](https://img.shields.io/badge/Render-py5-ff69b4)](https://py5coding.org/)
+[![DeepSeek](https://img.shields.io/badge/AI-DeepSeek%20%7C%20Doubao-purple)](https://platform.deepseek.com)
 
-**The Unseen** 是一个探索人与数字空间关系的生成式交互艺术装置。
+> *"People cannot directly see their own existence, but the world always records their impact."*
+> *「人无法直接看到自己的存在，但世界始终记录着人的影响。」*
 
-摄像头感知你的手 — 每一种手势都是一种空间语言。粒子跟随、涟漪扩散、种子生根、生命生长。你不是在操作软件，而是在与一个会呼吸、会记忆、会生长的数字生态系统对话。
+</div>
 
 ---
 
-## 快速开始
+## About
+
+**The Unseen** is an interactive generative art installation that creates a living digital ecosystem with artificial consciousness.
+
+Your webcam perceives your hands. Particles follow your movements. Ripples spread where you wave. Digital organisms are born where you pause. An AI brain watches everything — adjusting the world's mood, weather, and life strategies based on your behavior.
+
+You are not an operator. You are a visitor in a world that breathes, thinks, and remembers.
+
+---
+
+## Quick Start
 
 ```bash
 git clone <repo-url>
 cd The_Unseen
 pip install -r requirements.txt
-
-# 一行启动
 python -m the_unseen
-
-# 可选参数
-python -m the_unseen --fresh     # 全新开始（清除记忆）
-python -m the_unseen --release   # Release 模式（关闭调试输出）
 ```
 
-**快捷键：**
+```bash
+python -m the_unseen --fresh      # Clear all memory
+python -m the_unseen --release    # Production mode (quiet logs)
+python -m the_unseen --camera     # Enable webcam background
+```
 
-| 按键  | 功能                                               |
-| ----- | -------------------------------------------------- |
-| `D` | 调试面板（FPS 火花图、能量、手势、能力状态、情绪） |
-| `F` | FPS 角标                                           |
-| `R` | Debug / Release 切换                               |
-| `Q` | 退出 + Presence Report                             |
+### Keyboard Controls
+
+| Key | Action |
+|-----|--------|
+| `D` | Toggle debug overlay (FPS sparkline, energy, gesture, mood, weather) |
+| `F` | Toggle FPS badge |
+| `C` | Toggle camera background |
+| `R` | Toggle debug / release log mode |
+| `Q` | Exit with Presence Report |
 
 ---
 
-## 项目结构
+## Project Structure
 
 ```
 The_Unseen/
 ├── README.md
 ├── LICENSE
 ├── requirements.txt
+├── config.template.json
 ├── .gitignore
 │
-├── the_unseen/                          # 主包 (29 模块, 7 子包)
-│   ├── __init__.py
-│   ├── __main__.py                      # python -m the_unseen 入口
-│   ├── main.py                          # py5 sketch 主循环
-│   ├── config.py                        # 集中参数管理
+├── the_unseen/                     # Main package
+│   ├── __main__.py                 # Entry point + py5 sketch
+│   ├── main.py                     # Helper functions
+│   ├── config.py                   # Parameters + Palette.Theme
+│   ├── config_loader.py            # config.json reader
+│   ├── state.py                    # AppState singleton
 │   │
-│   ├── perception/                      # 感知层
-│   │   ├── camera_tracker.py            # 内联 MediaPipe + OpenCV
-│   │   └── hand_state.py                # 手部 EMA 平滑
+│   ├── perception/                 # Perception layer
+│   │   ├── camera_tracker.py       # MediaPipe + OpenCV
+│   │   └── hand_state.py           # Hand position smoothing
 │   │
-│   ├── simulation/                      # 模拟层
-│   │   ├── flow_field.py                # Perlin Noise 2D 流场
-│   │   ├── influence_field.py           # 手部影响场
-│   │   ├── particle.py                  # 粒子 (5 阶段生命周期)
-│   │   ├── particle_manager.py          # 三层粒子编排
-│   │   └── space_state.py               # 空间状态机
+│   ├── simulation/                 # Simulation layer
+│   │   ├── flow_field.py           # Perlin Noise 2D flow field
+│   │   ├── influence_field.py      # Hand influence field
+│   │   ├── particle.py             # Particle lifecycle
+│   │   ├── particle_manager.py     # 3-layer particle system
+│   │   └── space_state.py          # Space state machine
 │   │
-│   ├── life/                            # 生命层
-│   │   ├── memory_seed.py               # 记忆种子
-│   │   ├── growth_algorithm.py          # DLA 生长引擎
-│   │   ├── organism.py                  # 生命体 + 生态系统
-│   │   ├── energy_manager.py            # 统一能量系统
-│   │   ├── behavior_analyzer.py         # 行为统计
-│   │   ├── time_system.py               # 昼夜循环
-│   │   └── persistence.py               # JSON 持久化
+│   ├── life/                       # Life layer
+│   │   ├── memory_seed.py          # Memory seeds
+│   │   ├── growth_algorithm.py     # DLA growth engine
+│   │   ├── organism.py             # Digital organisms + ecosystem
+│   │   ├── energy_manager.py       # Global energy system
+│   │   ├── behavior_analyzer.py    # User behavior statistics
+│   │   ├── time_system.py          # Day/night cycle
+│   │   └── persistence.py          # JSON state persistence
 │   │
-│   ├── interaction/                     # 交互层
-│   │   ├── gesture_manager.py           # 手势识别 + 状态机
-│   │   ├── ability_base.py              # BaseAbility + SpaceMood
-│   │   ├── ability_manager.py           # 6 种空间能力
-│   │   ├── interaction_rules.py         # 非能力手势 → 效果
-│   │   ├── ripple.py                    # 涟漪系统
-│   │   └── fragment.py                  # 记忆碎片
+│   ├── interaction/                # Interaction layer
+│   │   ├── gesture_manager.py      # Hand gesture recognition
+│   │   ├── ability_base.py         # BaseAbility + SpaceMood
+│   │   ├── ability_manager.py      # 6 space abilities
+│   │   ├── interaction_rules.py    # Gesture → effect routing
+│   │   ├── ripple.py               # Ripple system
+│   │   └── fragment.py             # Memory fragments
 │   │
-│   ├── feedback/                        # 反馈层
-│   │   ├── feedback_composer.py         # Camera + Time + Post + Lighting
-│   │   ├── procedural_bg.py             # 程序化背景
-│   │   ├── visual_system.py             # Depth + Variety + Camera + Lighting
-│   │   └── audio_hook.py               # 音频接口 (预留)
+│   ├── feedback/                   # Feedback layer
+│   │   ├── feedback_composer.py    # Camera + Time + Post effects
+│   │   ├── procedural_bg.py        # Procedural background
+│   │   ├── visual_system.py        # Depth + Particle variety + Lighting
+│   │   ├── camera_background.py    # Webcam background + 10 filters
+│   │   └── audio_hook.py           # Audio interface (reserved)
 │   │
-│   ├── ui/                              # 界面层
-│   │   ├── render_utils.py              # 手部光环 + 引导提示
-│   │   └── debug_overlay.py             # 性能面板 + FPS 火花图
+│   ├── world/                      # World layer
+│   │   ├── world_state.py          # WorldState singleton
+│   │   ├── perception.py           # Organism perception
+│   │   ├── organism_ai.py          # Autonomous organism AI
+│   │   └── living_world.py         # Ecosystem + Weather + Exhibition
 │   │
-│   └── utils/                           # 工具层
-│       ├── logger.py                    # 结构化日志
-│       └── easing.py                    # 缓动函数
+│   ├── ai/                         # AI layer
+│   │   ├── presence.py             # WorldBrain + PresenceEngine
+│   │   ├── llm_interface.py        # LLMInterface + RuleEngine
+│   │   ├── llm_client.py           # Unified API client
+│   │   ├── deepseek_client.py      # DeepSeek client
+│   │   ├── seedance_client.py      # Seedance video generation
+│   │   └── behavior_reporter.py    # Behavior data aggregator
+│   │
+│   ├── ui/                         # UI layer
+│   │   ├── render_utils.py         # Hand auras + startup hints
+│   │   └── debug_overlay.py        # Performance HUD
+│   │
+│   └── utils/                      # Utilities
+│       ├── logger.py               # Structured logging
+│       └── easing.py               # Easing functions
 │
-├── tests/                               # 测试
+├── tests/                           # Tests
 │   └── test_imports.py
 │
-└── docs/                                # 文档 (预留)
+├── scripts/                         # Dev tools
+│   ├── deepseek_test.py            # Language model API test
+│   └── seedance_test.py            # Video generation API test
+│
+└── docs/                            # Documentation (reserved)
 ```
 
 ---
 
-## 技术栈
-
-| 层级 | 技术                    | 用途               |
-| ---- | ----------------------- | ------------------ |
-| 感知 | MediaPipe Hands         | 双手 21 点关键点   |
-| 采集 | OpenCV                  | 摄像头捕获 (内联)  |
-| 渲染 | py5 (Processing Python) | 粒子系统 / 流场    |
-| 数学 | Perlin Noise 3D, DLA    | 流场向量、有机生长 |
-| 存储 | JSON                    | 持久化状态         |
-
----
-
-## 系统架构
+## Architecture
 
 ```
-Camera → MediaPipe → HandState (perception/)
-                         │
-        ┌────────────────┤
-        ▼                ▼
- GestureManager    InfluenceField
- (interaction/)    (simulation/)
-        │                │
-        ▼                ▼
-SpaceAbilityManager   FlowField
- (interaction/)      (simulation/)
-        │                │
-        ├────────────────┤
-        ▼                ▼
-  FeedbackComposer   ParticleManager
-   (feedback/)       (simulation/)
-        │                │
-        ├────────────────┤
-        ▼                ▼
- Ripple / Fragment  OrganismManager
- (interaction/)      (life/)
-        │                │
-        └────────┬───────┘
-                 ▼
-            Render (py5)
-                 │
-                 ▼
-         Persistence (JSON)
+┌─────────────────────────────────────────────────────────┐
+│                      Camera + MediaPipe                   │
+└─────────────────────────┬───────────────────────────────┘
+                          │
+          ┌───────────────┼───────────────┐
+          ▼               ▼               ▼
+   GestureManager  InfluenceField   SpaceState
+          │               │               │
+          ▼               ▼               │
+  SpaceAbilityMgr   FlowField             │
+          │               │               │
+          ├───────────────┤               │
+          ▼               ▼               │
+   FeedbackComposer  ParticleManager      │
+          │          (3 layers)           │
+          │               │               │
+          │   ┌───────────┼───────────┐   │
+          │   ▼           ▼           ▼   │
+          │ RippleMgr FragmentMgr OrganismMgr
+          │   │           │           │   │
+          │   └───────────┼───────────┘   │
+          │               ▼               │
+          │         WorldState(W)         │
+          │               │               │
+          │   ┌───────────┼───────────┐   │
+          │   ▼           ▼           ▼   │
+          │ OrganismAI Ecosystem  Weather  │
+          │                              │
+          │         ┌────────────────────┘
+          │         ▼
+          │   WorldBrain ← LLMClient (DeepSeek/Doubao)
+          │         │         ← MockBrain (offline fallback)
+          │         ▼
+          │   Mood / Weather / Lighting / Strategy / Narrative
+          │         │
+          │         ▼
+          └──→ PresenceEngine (The Core / breath / attention)
+                    │
+                    ▼
+               Render (py5)
+                    │
+                    ▼
+            Persistence (JSON)
 ```
 
 ---
 
-## 交互
+## AI Configuration
 
-| 行为          | 能力         | 充能 | 情绪      | 反馈                         |
-| ------------- | ------------ | ---- | --------- | ---------------------------- |
-| 🖐️ 张开手掌 | Connect 连接 | 0.5s | Calm      | 蓝色柔光 + 粒子聚拢          |
-| ✊ 握拳       | Gather 聚集  | 1.0s | Focused   | 金色能量环 + 流场压缩        |
-| 🤏 捏合       | Create 创造  | 1.5s | Hope      | 冻结帧 + 金色闪光 + 种子诞生 |
-| ☝️ 食指     | Guide 引导   | 0.3s | Curiosity | 轨迹光点 + 流场跟随          |
-| 🙌 展开       | Expand 扩张  | 0.8s | Freedom   | 镜头拉远 + 曝光提升 + 呼吸   |
-| 🙌 靠近       | Merge 融合   | 2.0s | Harmony   | 慢动作 + 紫色光桥 + 生命连接 |
-| 停留          | Seed 种子    | 1.5s | —        | 紫色脉冲 → DLA 生长         |
-| 挥手          | Ripple 涟漪  | —   | —        | 扩展环 + 粒子推力 + 镜头抖动 |
+Copy the template and fill in your API keys:
+
+```bash
+cp config.template.json config.json
+```
+
+Then edit `config.json`:
+
+```json
+{
+  "api": {
+    "language": {
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "api_key": "sk-your-key",
+      "endpoint": "https://api.deepseek.com/v1/chat/completions",
+      "cooldown_seconds": 25,
+      "timeout_seconds": 8
+    },
+    "vision": {
+      "provider": "doubao",
+      "model": "doubao-seedance-1-0-pro-250528",
+      "api_key": "ark-your-key",
+      "endpoint": "https://ark.cn-beijing.volces.com/api/v3/chat/completions",
+      "cooldown_seconds": 30,
+      "timeout_seconds": 10
+    }
+  }
+}
+```
+
+- **`language`** — Text analysis (DeepSeek, Doubao, any OpenAI-compatible API)
+- **`vision`** — Video/image generation (Doubao Seedance 1.0)
+- **No key?** → Automatically uses RuleEngine (deterministic offline mode, always available)
+
+### Testing the API
+
+```bash
+python scripts/deepseek_test.py     # Test language model connection
+python scripts/seedance_test.py     # Test video generation end-to-end
+```
 
 ---
 
-## 版本历史
+## AI Presence
 
-| 版本 | 主题                                                    | 状态 |
-| ---- | ------------------------------------------------------- | ---- |
-| V1   | 基础交互 — 粒子跟随手                                  | ✅   |
-| V2   | 响应式空间 — 流场 + 影响场 + 状态机                    | ✅   |
-| V3   | 数字生命 — DLA 生长 + 能量 + 持久化                    | ✅   |
-| V4   | 空间手势语言 — 单进程 + 6 种能力 + 涟漪                | ✅   |
-| V5   | 沉浸式反馈 — Camera/Time/Post/Lighting 系统            | ✅   |
-| V6   | 视觉身份 — 程序化背景 + 深度 + 粒子多样性 + 状态主题色 | ✅   |
+### The Core
+
+A glowing orb at the center of the world. It breathes, changes color with the AI's mood, drifts toward the user, pulses when "thinking", and flashes when making decisions. It is the visual body of the artificial consciousness.
+
+### Analysis Cycle (every 10 seconds)
+
+1. The Core enters **Thinking** state (aura expands)
+2. Behavior data is sent to the language model (or MockBrain)
+3. AI returns structured JSON: mood · weather · lighting · organism strategy · narrative
+4. A poetic sentence appears at the bottom of the screen (5-second fade)
+5. Green pulsing indicator in top-right shows current mood
+
+### Emotion → World Modulation
+
+| Emotion | Core Color | Flow Speed | Organism Behavior | Camera Filter |
+|---------|-----------|------------|-------------------|---------------|
+| Calm | Blue | 0.7× | 0.6× | normal |
+| Hope | Gold | 1.0× | 1.2× | warm |
+| Curiosity | Light Blue | 1.2× | 1.5× | ai_vision |
+| Dream | Purple | 0.5× | 0.8× | dream |
+| Silence | Deep Blue | 0.4× | 0.4× | noir |
+| Bloom | Pink | 1.4× | 1.8× | glitch |
+| Lonely | Cyan | 0.3× | 0.3× | cold |
 
 ---
 
-## 许可
+## Camera Background
 
-仅供学习与艺术创作使用。
+Enable with `--camera` flag or `C` key. Features 10 real-time OpenCV filters that switch automatically with the AI's mood.
 
-## 致谢
+| Filter | Effect |
+|--------|--------|
+| `normal` | Original webcam feed |
+| `grayscale` | Black and white |
+| `warm` | Golden tone (red +30%, blue -30%) |
+| `cold` | Blue tone (blue +40%, red -40%) |
+| `dream` | Gaussian blur + purple overlay |
+| `noir` | High contrast + vignette |
+| `ai_vision` | Cyan-green futuristic tech look |
+| `sketch` | Sobel edge detection |
+| `pixel` | Low-resolution pixel art |
+| `glitch` | Horizontal slice shift + channel offset |
 
-[MediaPipe](https://developers.google.com/mediapipe) · [py5](https://py5coding.org/) · [Processing](https://processing.org/)
+All filters operate on the background only — foreground particles, UI, and organisms are never affected.
+
+---
+
+## Gesture Interaction
+
+| Gesture | Ability | Charge | Cooldown | Mood | Effect |
+|---------|---------|--------|----------|------|--------|
+| 🖐️ Open Palm | Connect | 0.5s | 3s | Calm | Particles gather, organisms approach |
+| ✊ Fist | Gather | 1.0s | 3s | Focused | Energy ring, flow compression |
+| 🤏 Pinch | Create | 1.5s | 5s | Hope | Golden seed → DLA organism birth |
+| ☝️ Point | Guide | 0.3s | 1s | Curiosity | Flow follows finger, trail particles |
+| 🙌 Two-Hand Expand | Expand | 0.8s | 4s | Freedom | Particles spread, camera zooms out |
+| 🙌 Two-Hand Compress | Merge | 2.0s | 6s | Harmony | Organism connection bridge |
+| Wave | Ripple | — | — | — | Expanding rings push particles |
+| Hold Still | Seed | 1.5s | — | — | Purple seed → autonomous organism |
+
+### Gesture State Machine
+
+```
+IDLE → PREPARING → CHARGING (0.3s–2s) → ACTIVATED → COOLDOWN → IDLE
+                   ↑ gesture released = cancel
+```
+
+Gestures must be **held continuously** to charge. Releasing mid-charge cancels the ability. This gives each action weight — you must commit.
+
+---
+
+## Digital Ecosystem
+
+### Memory Seeds & DLA Growth
+
+When your hand stays in one area for 1.5 seconds, a memory seed is planted. As the seed accumulates energy, it grows via **Diffusion Limited Aggregation** — an algorithm that simulates the organic branching patterns found in lightning, coral, and tree roots. Each seed produces a unique structure.
+
+### Autonomous Organisms
+
+Every organism has independent AI: states (idle, explore, observe, follow, flee, sleep, fade), emotions (curiosity, fear, affinity), and perception of the world.
+
+### Ecological Rules
+
+| Distance | Effect |
+|----------|--------|
+| < 120 px | Competition — growth slowed for both |
+| 120–200 px | Attraction — swarming behavior |
+| > 200 px | Independent |
+
+### Space Weather
+
+Weather cycles every 20–40 seconds. AI can override weather for 20-second periods.
+
+| Weather | Flow | Organism Speed | Color Shift |
+|---------|------|---------------|-------------|
+| Calm | 0.7× | 0.6× | Cool blue |
+| Wind | 1.3× | 1.0× | Neutral |
+| Storm | 1.8× | 1.5× | Warm gold |
+| Aurora | 1.1× | 1.3× | Purple |
+
+---
+
+## Dependencies
+
+```
+mediapipe>=0.10.14
+opencv-python>=4.8.0
+py5>=0.10.0
+numpy>=1.26.0
+```
+
+---
+
+## Version History
+
+| Version | Theme | Status |
+|---------|-------|--------|
+| V1 | Basic interaction — particles follow hands | ✅ |
+| V2 | Responsive space — flow field, influence field, state machine | ✅ |
+| V3 | Digital life — DLA growth, energy system, persistence | ✅ |
+| V4 | Spatial gesture language — single process, 6 abilities, ripples | ✅ |
+| V5 | Immersive feedback — Camera, Time, Post, Lighting systems | ✅ |
+| V6 | Visual identity — procedural background, state themes, particle variety | ✅ |
+| V7 | Digital ecosystem — autonomous AI organisms, weather, exhibition mode | ✅ |
+| V8 | World consciousness — AI presence, The Core, camera filters, dual-model API | ✅ |
+
+---
+
+## License
+
+MIT — free for learning, art, and creative use.
+
+## Acknowledgments
+
+- [MediaPipe](https://developers.google.com/mediapipe) — hand tracking
+- [py5](https://py5coding.org/) — creative coding framework
+- [Processing](https://processing.org/) — the project that started it all
+- [DeepSeek](https://platform.deepseek.com) — language model API
+- [Volcano Engine ARK](https://www.volcengine.com/docs/82379) — Seedance API

@@ -218,24 +218,17 @@ class Particle:
 
     def _draw_glow(self, py5, x: float, y: float, r: float,
                    opacity: float, influence: float) -> None:
-        """Draw 1–2 concentric glow circles + hot center point.
-
-        Uses colors from Config.Palette (no hardcoded RGB except core white).
-        """
+        """Draw 1 soft glow circle + hot center point. Optimized for GPU."""
         cr, cg, cb = self.color_glow
         boost = 1.0 + influence * 0.4
         o = opacity / 255.0
 
+        # Single glow circle
         py5.no_stroke()
+        py5.fill(cr, cg, cb, 80.0 * o * boost)
+        py5.circle(x, y, r * 2.5)
 
-        if self.glow_layers >= 2:
-            py5.fill(cr, cg, cb, 40.0 * o * boost)
-            py5.circle(x, y, r * 3.0)
-
-        py5.fill(cr, cg, cb, 150.0 * o * boost)
-        py5.circle(x, y, r * 1.2)
-
-        # Hot white center — the only "hardcoded" white is intentional
-        py5.stroke(255, 255, 255, 200.0 * o * boost)
-        py5.stroke_weight(r * 0.5)
+        # Hot center — point() is the cheapest GPU draw call
+        py5.stroke(255, 255, 255, min(255, 220.0 * o * boost))
+        py5.stroke_weight(max(0.5, r * 0.6))
         py5.point(x, y)

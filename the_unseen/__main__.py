@@ -1,7 +1,7 @@
 """
 The Unseen — Interactive Generative Art Installation.
 
-python -m the_unseen [--fresh] [--release]
+python -m the_unseen [--fresh] [--release] [--camera]
 
 Keys: D=debug  F=FPS  R=release  Q=quit+report
 """
@@ -22,6 +22,7 @@ from .interaction.ability_manager import SpaceAbilityManager
 from .feedback.feedback_composer import FeedbackComposer
 from .feedback.procedural_bg import ProceduralBackground
 from .feedback.visual_system import DepthManager, BreathingCamera, StateLighting
+from .feedback.camera_background import CameraBgManager
 from .ui.render_utils import draw_hand_aura, draw_startup_hint
 from .ui.debug_overlay import DebugOverlay
 from .utils.logger import log, set_debug_mode
@@ -33,6 +34,20 @@ from .main import (
     on_quit, save_path,
 )
 
+from .world.world_state import W, WeatherType
+from .world.organism_ai import OrganismAI
+from .world.living_world import (
+    EcosystemManager, WeatherSystem, WorldMemory, ExhibitionController,
+)
+
+from .ai.presence import WorldBrain, PresenceEngine, MemoryCurator
+
+
+# ============================================================
+# Global switches
+# ============================================================
+_use_camera_bg: bool = False     # --camera flag enables camera background
+
 
 # ============================================================
 # py5 Callbacks
@@ -40,13 +55,16 @@ from .main import (
 
 def setup() -> None:
     """Initialize all subsystems."""
+    global _brain, _memory, _presence, _camera_bg
+
     py5.size(Config.WIDTH, Config.HEIGHT, py5.P2D)
     py5.color_mode(py5.RGB, 255)
     py5.frame_rate(60)
     py5.window_title("The Unseen — 不可见")
     py5.background(0)
 
-    S.camera = CameraTracker(process_every_n=2)
+    # Camera for hand tracking
+    S.camera = CameraTracker(process_every_n=3)
     if not S.camera.start():
         log("Camera", "No camera — demo mode", "WARN")
 
@@ -57,6 +75,11 @@ def setup() -> None:
     S.flow_field.update(0.0)
 
     init_organisms()
+
+    WorldMemory.deserialize({})
+    if S.organism_manager:
+        for org in S.organism_manager.organisms:
+            W.register_organism(OrganismAI(org, org.seed.x, org.seed.y))
 
     S.debug_overlay = DebugOverlay()
     S.debug_overlay.set_font(py5.create_font("Monospaced", 10))
@@ -76,17 +99,21 @@ def setup() -> None:
     S.breath_cam = BreathingCamera()
     S.state_light = StateLighting()
 
-    S.frame_start_ms = py5.millis()
+    _brain = WorldBrain()
+    _memory = MemoryCurator()
+    _memory.record_visit()
+    _presence = PresenceEngine()
+    _camera_bg = CameraBgManager()
 
-    counts = S.particle_manager.layer_counts()
-    log("Init", f"{S.particle_manager.total_count()} particles "
-        f"(BG:{counts['background']} INT:{counts['interaction']} "
-        f"HL:{counts['highlight']})")
+    log("Brain", f"{'Live AI' if _brain._llm.available else 'Mock AI'} "
+        f"({_brain._backend_name}) — Visit #{_memory.visit_count()}")
     log("Init", "D=debug  F=FPS  R=release  Q=quit")
+
+    S.frame_start_ms = py5.millis()
 
 
 def draw() -> None:
-    """Main loop."""
+    """Main loop — heavily optimized."""
     if S.flow_field is None or S.particle_manager is None:
         return
     if S.space_state is None or S.influence_field is None:
@@ -109,56 +136,36 @@ def draw() -> None:
         dt = S.feedback.apply_dt(dt)
         S.feedback.update(dt)
 
+    # ── Background (camera or procedural) ──────────────
+    if _use_camera_bg and S.camera:
+        _camera_bg.set_filter_from_mood(_brain.mood)
+        _camera_bg.draw_background(py5, S.camera)
+    else:
+        py5.background(5, 10, 25)
+
     # Camera + Hands
     active_hands = camera_process()
     has_hands = len(active_hands) > 0
     max_speed = max((hs.speed for hs in active_hands), default=0.0)
 
-    # Gestures
+    # Gestures + AI feed
     if S.gesture_manager and S.camera:
         update_gestures(active_hands, dt)
 
-    # Space State
+    _brain.feed(_get_gesture(active_hands), max_speed, has_hands)
     S.space_state.update(has_hands, max_speed)
 
-    # V6 Breathing Camera
-    if S.breath_cam:
-        S.breath_cam.update(dt)
-        S.breath_cam.apply(py5)
-
-    # V6 BG + Lighting
-    if S.state_light and S.bg_renderer:
-        S.state_light.set_state(S.space_state.state)
-        S.state_light.update(dt)
-        S.bg_renderer.update(dt)
-        S.bg_renderer.draw(py5, S.space_state.state)
-
-    # V5 Camera matrix
-    py5.push_matrix()
-    if S.feedback:
-        S.feedback.apply_camera(py5)
-
-    # Motion blur
+    # Motion blur + procedural atmosphere (combined into one pass)
     py5.no_stroke()
-    py5.fill(0, 0, 0, S.space_state.trail_alpha)
+    alpha = 4 if not has_hands else (8 if max_speed < 0.06 else 12)
+    py5.fill(0, 0, 0, alpha)
     py5.rect(0, 0, Config.WIDTH, Config.HEIGHT)
 
     # Flow Field
     t = now_ms / 1000.0
-    interval = max(1, int(Config.FLOW_UPDATE_INTERVAL
-                          / S.space_state.flow_multiplier))
-    ripple_flow = 1.0
-    if S.ripple_manager and S.ripple_manager.active_count > 0:
-        ripple_flow = 1.0 + S.ripple_manager.get_flow_modulation(
-            Config.WIDTH / 2, Config.HEIGHT / 2) * 2.0
-        shake = S.ripple_manager.get_camera_shake()
-        if shake > 0.1 and S.feedback:
-            S.feedback.camera.trigger("shake", shake * 0.4, 0.15, "smoothstep")
+    interval = max(1, int(Config.FLOW_UPDATE_INTERVAL / S.space_state.flow_multiplier))
     if py5.frame_count % interval == 0:
-        S.flow_field.time_scale = (
-            Config.FLOW_NOISE_SPEED
-            * S.space_state.flow_multiplier
-            * ripple_flow)
+        S.flow_field.time_scale = Config.FLOW_NOISE_SPEED * S.space_state.flow_multiplier
         S.flow_field.update(t)
 
     # Influence
@@ -177,45 +184,46 @@ def draw() -> None:
         update_organisms(active_hands, has_hands, max_speed, dt)
         S.organism_manager.display(py5)
 
-    # V4 Ripple + Fragment
+    # Ripple + Fragment
     if S.ripple_manager and S.fragment_manager:
         update_ripples(active_hands, has_hands, max_speed, dt)
         S.ripple_manager.display(py5)
         S.fragment_manager.display(py5)
 
-    # V4 Ability feedback
     if S.ability_manager:
         S.ability_manager.display(py5)
+
+    # Living World + AI Brain
+    _update_world(active_hands, has_hands, dt, py5)
+
+    # AI Presence (Core + mood)
+    ux = active_hands[0].px if active_hands else Config.WIDTH / 2
+    uy = active_hands[0].py if active_hands else Config.HEIGHT / 2
+    _presence.update(dt, has_hands, ux, uy, _brain)
+    _presence.display(py5, _brain)
 
     # Hand Auras
     for hs in active_hands:
         color = (Config.Palette.HAND_LEFT if hs.side == "left"
                  else Config.Palette.HAND_RIGHT)
-        draw_hand_aura(py5, hs.px, hs.py, hs.speed,
-                       S.space_state.state, color)
+        draw_hand_aura(py5, hs.px, hs.py, hs.speed, S.space_state.state, color)
 
     # Startup Hint
-    draw_startup_hint(
-        py5, has_hands,
-        has_data=S.hand_left.has_data or S.hand_right.has_data,
-        organism_count=(S.organism_manager.total_organisms()
+    if py5.frame_count < 300 or not has_hands:
+        draw_startup_hint(
+            py5, has_hands,
+            has_data=S.hand_left.has_data or S.hand_right.has_data,
+            organism_count=(S.organism_manager.total_organisms()
+                            if S.organism_manager else 0),
+            seed_count=(len(S.organism_manager.pending_seeds)
                         if S.organism_manager else 0),
-        seed_count=(len(S.organism_manager.pending_seeds)
-                    if S.organism_manager else 0),
-        frame_count=py5.frame_count)
+            frame_count=py5.frame_count)
 
     # Debug
     if S.debug_overlay is not None:
         S.debug_overlay.update(frame_time)
         if S.debug_overlay.visible or S.debug_overlay.fps_only:
             draw_debug_overlay(py5, active_hands)
-
-    # End camera matrix
-    py5.pop_matrix()
-
-    # Post effects
-    if S.feedback:
-        S.feedback.apply_post(py5)
 
 
 def key_pressed() -> None:
@@ -226,12 +234,107 @@ def key_pressed() -> None:
     elif py5.key in ('r', 'R'):
         S.release_mode = not S.release_mode
         set_debug_mode(not S.release_mode)
+    elif py5.key in ('c', 'C'):
+        global _use_camera_bg
+        _use_camera_bg = not _use_camera_bg
+        log("Camera", f"Camera background: {'ON' if _use_camera_bg else 'OFF'}")
     elif py5.key in ('q', 'Q'):
-        on_quit(py5)
+        _quit_with_brain()
 
 
 def exiting() -> None:
-    on_quit(py5)
+    _quit_with_brain()
+
+
+# ============================================================
+# Helpers
+# ============================================================
+
+def _get_gesture(active_hands: list) -> str:
+    if S.gesture_manager:
+        g, _ = S.gesture_manager.get_active("right")
+        if g == "none":
+            g, _ = S.gesture_manager.get_active("left")
+        return g
+    return "none"
+
+
+def _quit_with_brain() -> None:
+    def after_save(stats):
+        orgs = W.organism_count()
+        energy = S.energy_manager.energy if S.energy_manager else 30.0
+        result = _brain.finalize(stats, orgs, energy, _memory.get())
+        _memory.record_session(stats, result.get("narrative", ""))
+        _memory.record_peak(orgs, energy)
+        _memory.save()
+        if result.get("narrative"):
+            print(f'\n  "{result["narrative"]}"\n')
+    on_quit(py5, after_save=after_save)
+
+
+def _update_world(active_hands, has_hands, dt, py5) -> None:
+    """Update ecosystem + AI brain. Most expensive ops throttled."""
+    W.update_perception(
+        hands=[(hs.px, hs.py) for hs in active_hands],
+        speeds=[hs.speed for hs in active_hands],
+        gesture=_get_gesture(active_hands),
+        energy=S.energy_manager.energy if S.energy_manager else 30.0,
+        space_state=S.space_state.state if S.space_state else "IDLE",
+        time_phase=S.time_system.get_phase_name() if S.time_system else "dawn",
+    )
+
+    if not W.weather_locked:
+        WeatherSystem.update(dt)
+    ExhibitionController.update(dt, has_hands)
+
+    # AI analysis
+    if S.behavior_analyzer:
+        _brain.update(dt, S.behavior_analyzer.get_stats(),
+                      W.organism_count(),
+                      S.energy_manager.energy if S.energy_manager else 30.0,
+                      _memory.get())
+    EcosystemManager.update(dt)
+
+    # Organisms
+    W.world_age += dt
+    for ai in W.autonomous_organisms[:]:
+        ai.update(dt, W)
+        if ai.state == "fade" and ai.energy < 1.0:
+            W.unregister_organism(ai)
+
+    # Apply AI directives
+    wmod = WeatherSystem.get_modifiers()
+    ambient = ExhibitionController.get_ambient_modifier()
+    light_mult = _brain.lighting_mult()
+    strat = _brain.strategy_mult()
+
+    if S.flow_field:
+        S.flow_field.flow_strength = 0.30 * wmod["flow"] * ambient * light_mult
+
+    for ai in W.autonomous_organisms:
+        ai.curiosity = min(1.0, ai.curiosity * strat["curiosity"])
+        ai.fear = min(1.0, ai.fear * strat["fear"])
+        ai.affinity = min(1.0, ai.affinity * strat["affinity"])
+
+    # Display organisms (every frame — no throttling)
+    for ai in W.autonomous_organisms:
+        ai.display(py5)
+
+    # Spawn AI wrappers for new V3 organisms
+    if S.organism_manager and py5.frame_count % 30 == 0:
+        for org in S.organism_manager.organisms:
+            if not any(ai.organism is org for ai in W.autonomous_organisms):
+                W.register_organism(OrganismAI(org, org.seed.x, org.seed.y))
+
+
+# ============================================================
+# V8 AI Globals
+# ============================================================
+
+_brain: WorldBrain = WorldBrain()
+_memory: MemoryCurator = MemoryCurator()
+_presence: PresenceEngine = PresenceEngine()
+_camera_bg: CameraBgManager = CameraBgManager()
 
 
 # ============================================================
@@ -243,15 +346,18 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="The Unseen")
     parser.add_argument("--fresh", action="store_true")
     parser.add_argument("--release", action="store_true")
+    parser.add_argument("--camera", action="store_true",
+                        help="Enable webcam background")
     args = parser.parse_args()
 
     if args.release:
         S.release_mode = True
         set_debug_mode(False)
     if args.fresh:
-        delete_state(save_path())
         S.fresh_start = True
-        log("Init", "Fresh start")
+        delete_state(save_path())
+    if args.camera:
+        _use_camera_bg = True
 
     log("Init", "The Unseen — python -m the_unseen")
     py5.run_sketch()

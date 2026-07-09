@@ -47,8 +47,8 @@ class ProceduralBackground:
         w, h = py5.width, py5.height
         py5.no_stroke()
 
-        # Base layer: always drawn — solid ambient fill
-        py5.fill(ar, ag, ab, 255)
+        # Base layer: semi-transparent ambient tint (camera shows through)
+        py5.fill(ar, ag, ab, 30)
         py5.rect(0, 0, w, h)
 
         # Decorative gradient: throttled to every 15 frames
