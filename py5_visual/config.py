@@ -51,38 +51,38 @@ class Config:
     # Particle Layers
     # ============================================================
 
-    # ---- Layer 1: Background (slow drift, large, soft, no trail) ----
-    PARTICLE_BG_COUNT: int = 1200
-    PARTICLE_BG_SIZE_MIN: float = 2.0
-    PARTICLE_BG_SIZE_MAX: float = 5.0
-    PARTICLE_BG_SPEED_MAX: float = 1.5
+    # ---- Layer 1: Background (slow drift, subtle, no trail, minimal glow) ----
+    PARTICLE_BG_COUNT: int = 800
+    PARTICLE_BG_SIZE_MIN: float = 1.5
+    PARTICLE_BG_SIZE_MAX: float = 4.0
+    PARTICLE_BG_SPEED_MAX: float = 1.2
     PARTICLE_BG_DAMPING: float = 0.97
     PARTICLE_BG_LIFE_MIN: float = 300
     PARTICLE_BG_LIFE_MAX: float = 600
-    PARTICLE_BG_TRAIL_LENGTH: int = 0       # No trail — performance
-    PARTICLE_BG_GLOW_LAYERS: int = 2        # Minimal glow
+    PARTICLE_BG_TRAIL_LENGTH: int = 0
+    PARTICLE_BG_GLOW_LAYERS: int = 1        # Single glow — ultra subtle
 
-    # ---- Layer 2: Interaction (main flow followers) ----
-    PARTICLE_INT_COUNT: int = 600
-    PARTICLE_INT_SIZE_MIN: float = 1.5
-    PARTICLE_INT_SIZE_MAX: float = 4.0
-    PARTICLE_INT_SPEED_MAX: float = 3.5
+    # ---- Layer 2: Interaction (main flow followers, no trail) ----
+    PARTICLE_INT_COUNT: int = 400
+    PARTICLE_INT_SIZE_MIN: float = 1.2
+    PARTICLE_INT_SIZE_MAX: float = 3.5
+    PARTICLE_INT_SPEED_MAX: float = 3.0
     PARTICLE_INT_DAMPING: float = 0.95
     PARTICLE_INT_LIFE_MIN: float = 200
     PARTICLE_INT_LIFE_MAX: float = 400
-    PARTICLE_INT_TRAIL_LENGTH: int = 10
-    PARTICLE_INT_GLOW_LAYERS: int = 3       # Standard glow
+    PARTICLE_INT_TRAIL_LENGTH: int = 0       # No trail — cleaner look
+    PARTICLE_INT_GLOW_LAYERS: int = 2        # Soft glow
 
-    # ---- Layer 3: Highlight (bright, fast, long trails) ----
-    PARTICLE_HL_COUNT: int = 120
-    PARTICLE_HL_SIZE_MIN: float = 1.0
-    PARTICLE_HL_SIZE_MAX: float = 3.5
-    PARTICLE_HL_SPEED_MAX: float = 5.0
+    # ---- Layer 3: Highlight (bright, fast, trails only here) ----
+    PARTICLE_HL_COUNT: int = 80
+    PARTICLE_HL_SIZE_MIN: float = 0.8
+    PARTICLE_HL_SIZE_MAX: float = 2.5
+    PARTICLE_HL_SPEED_MAX: float = 4.5
     PARTICLE_HL_DAMPING: float = 0.92
-    PARTICLE_HL_LIFE_MIN: float = 60
-    PARTICLE_HL_LIFE_MAX: float = 150
-    PARTICLE_HL_TRAIL_LENGTH: int = 18
-    PARTICLE_HL_GLOW_LAYERS: int = 3       # Standard glow
+    PARTICLE_HL_LIFE_MIN: float = 50
+    PARTICLE_HL_LIFE_MAX: float = 120
+    PARTICLE_HL_TRAIL_LENGTH: int = 0        # No trails — clean look
+    PARTICLE_HL_GLOW_LAYERS: int = 2
 
     # ============================================================
     # Particle Lifecycle
@@ -120,12 +120,19 @@ class Config:
         # Core white (shared across layers for hot center)
         CORE_WHITE: tuple[int, int, int] = (255, 255, 255)
 
+        # V3 — Digital Organism
+        LIFE_BLUE: tuple[int, int, int] = (80, 140, 255)
+        LIFE_DEEP: tuple[int, int, int] = (30, 60, 160)
+        MEMORY_PURPLE: tuple[int, int, int] = (160, 120, 240)
+        MEMORY_DIM: tuple[int, int, int] = (80, 50, 160)
+        ENERGY_GOLD: tuple[int, int, int] = (255, 210, 80)
+        ENERGY_WARM: tuple[int, int, int] = (255, 160, 40)
+        GROWTH_WHITE: tuple[int, int, int] = (240, 240, 255)
+        GROWTH_PALE: tuple[int, int, int] = (200, 210, 255)
     # ============================================================
-    # Motion Trail
-    # ============================================================
-    TRAIL_ALPHA_IDLE: int = 8       # Background fade alpha when no hand
-    TRAIL_ALPHA_ACTIVE: int = 14    # Background fade alpha with hand
-    TRAIL_ALPHA_EXCITED: int = 22   # Background fade alpha in excited state
+    TRAIL_ALPHA_IDLE: int = 4        # Background fade — very subtle
+    TRAIL_ALPHA_ACTIVE: int = 8      # Background fade with hand
+    TRAIL_ALPHA_EXCITED: int = 14    # Background fade in excited state
     TRAIL_BASE_LENGTH: int = 15     # Default trail history
     TRAIL_SPEED_SCALE: float = 0.5  # Trail length multiplier per speed unit
 
@@ -167,9 +174,9 @@ class Config:
     # ============================================================
     # Visual Polish
     # ============================================================
-    VIGNETTE_ENABLED: bool = True
-    AURA_RINGS: int = 3                  # Rings around hand (5 in excited)
-    AURA_RINGS_EXCITED: int = 5
+    VIGNETTE_ENABLED: bool = False       # Removed — noisy, hurts perf
+    AURA_RINGS: int = 1                  # Single soft ring
+    AURA_RINGS_EXCITED: int = 2          # Two rings when excited
 
     # ============================================================
     # OSC
@@ -180,5 +187,45 @@ class Config:
     # ============================================================
     # Debug
     # ============================================================
-    DEBUG_SHOW_STATUS: bool = True
-    DEBUG_SHOW_FPS: bool = True
+    DEBUG_SHOW_STATUS: bool = False      # Debug overlay off by default
+    DEBUG_SHOW_FPS: bool = False
+
+    # ============================================================
+    # V3 — Digital Organism
+    # ============================================================
+    V3_ENABLED: bool = True
+
+    # ---- Memory Seed ----
+    SEED_DWELL_RADIUS: float = 80.0         # px — hand must stay within this
+    SEED_DWELL_TIME: float = 1.5            # seconds of dwelling to create seed
+    SEED_DWELL_SPEED_MAX: float = 0.10      # max speed to count as "dwelling"
+    SEED_MAX_ENERGY: float = 100.0
+    SEED_ENERGY_RATE: float = 20.0          # energy gained per second of dwell
+    SEED_ENERGY_DECAY: float = 2.0          # energy lost per second when absent
+    SEED_GROWTH_THRESHOLD: float = 40.0     # energy needed to begin growth
+
+    # ---- DLA Growth ----
+    DLA_WALKERS_PER_FRAME: int = 40         # Walkers per frame (faster growth)
+    DLA_MAX_STEPS: int = 150                # Max steps before walker dies
+    DLA_STICK_RADIUS: float = 4.0           # px — contact distance
+    DLA_MAX_RADIUS: float = 150.0           # px — max cluster radius
+    DLA_SPAWN_MARGIN: float = 20.0          # px beyond current radius
+
+    # ---- Energy System ----
+    ENERGY_MAX: float = 100.0
+    ENERGY_MOVE_GAIN: float = 8.0           # per unit speed per second
+    ENERGY_IDLE_DECAY: float = 1.5          # per second when no hands
+    ENERGY_GROWTH_COST: float = 25.0        # one-time cost to spawn organism
+
+    # ---- Organism Ecosystem ----
+    ORGANISM_MAX_COUNT: int = 8
+    ORGANISM_MIN_DISTANCE: float = 80.0     # px minimum between organisms
+    ORGANISM_CONNECT_DISTANCE: float = 200.0  # px to draw connection line
+
+    # ---- Time System ----
+    TIME_CYCLE_SECONDS: float = 300.0       # 5 min = one full day/night
+
+    # ---- Persistence ----
+    PERSISTENCE_AUTOSAVE_INTERVAL: float = 30.0  # seconds
+    PERSISTENCE_FILE: str = "the_unseen_state.json"
+

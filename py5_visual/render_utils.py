@@ -14,9 +14,7 @@ from space_state import SpaceState
 def draw_hand_aura(
     py5, px: float, py: float, speed: float, state: str, color: tuple
 ) -> None:
-    """Draw soft multi-ring aura around a hand position.
-
-    More rings appear in EXCITED state. Ring size scales with hand speed.
+    """Draw a single soft ring around hand position — minimal and clean.
 
     Args:
         py5: The py5 module/sketch.
@@ -25,7 +23,6 @@ def draw_hand_aura(
         state: Current SpaceState name.
         color: (r, g, b) aura color.
     """
-    intensity = min(1.0, speed * 10.0)
     rings = (
         Config.AURA_RINGS_EXCITED
         if state == SpaceState.EXCITED
@@ -34,21 +31,12 @@ def draw_hand_aura(
     r, g, b = color
 
     for i in range(rings):
-        radius = 20.0 + i * 25.0 + speed * 80.0 * (i + 1) / rings
-        alpha = (rings - i) / rings * 30.0 * (1.0 + intensity)
+        radius = 30.0 + i * 20.0 + speed * 40.0
+        alpha = 40.0 * (1.0 - i * 0.5)
         py5.stroke(r, g, b, alpha)
-        py5.stroke_weight(0.8)
+        py5.stroke_weight(1.0)
         py5.no_fill()
         py5.circle(px, py, radius)
-
-    # Core glow
-    glow_size = 8.0 + speed * 40.0
-    for i in range(3):
-        rr = glow_size * (1.0 - i * 0.3)
-        a = 60.0 * (1.0 - i * 0.3) * (1.0 + intensity)
-        py5.no_stroke()
-        py5.fill(255, 255, 255, a)
-        py5.circle(px, py, rr)
 
 
 def draw_vignette(py5) -> None:

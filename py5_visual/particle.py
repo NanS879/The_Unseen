@@ -323,10 +323,10 @@ class Particle:
 
     def _draw_glow(self, py5, x: float, y: float, r: float,
                    opacity: float, influence: float) -> None:
-        """Draw concentric glow circles.
+        """Draw minimal concentric glow.
 
-        Perf: 3 layers max (down from 4). Hot center uses point() instead
-        of circle() for 0.5px radius core.
+        Perf: 1-2 layers max. Hot center uses point() (cheap).
+        Clean, subtle — no visual noise.
 
         Args:
             py5: py5 sketch.
@@ -336,25 +336,21 @@ class Particle:
             influence: Hand proximity boost 0–1.
         """
         cr, cg, cb = self.color_glow
-        boost = 1.0 + influence * 0.5
+        boost = 1.0 + influence * 0.4
         o = opacity / 255.0
 
         py5.no_stroke()
 
-        if self.glow_layers >= 3:
-            # Outer soft halo (was r*6, now r*4 — smaller = less GPU fill)
-            py5.fill(cr, cg, cb, 15.0 * o * boost)
-            py5.circle(x, y, r * 4.5)
+        if self.glow_layers >= 2:
+            # Soft outer glow
+            py5.fill(cr, cg, cb, 40.0 * o * boost)
+            py5.circle(x, y, r * 3.0)
 
-        # Mid glow
-        py5.fill(cr, cg, cb, 55.0 * o * boost)
-        py5.circle(x, y, r * 2.5)
+        # Inner core (always drawn)
+        py5.fill(cr, cg, cb, 150.0 * o * boost)
+        py5.circle(x, y, r * 1.2)
 
-        # Inner core
-        py5.fill(cr, cg, cb, 170.0 * o * boost)
-        py5.circle(x, y, r * 1.1)
-
-        # Hot center — use point() instead of tiny circle (much cheaper!)
-        py5.stroke(255, 255, 255, 230.0 * o * boost)
-        py5.stroke_weight(r * 0.6)
+        # Hot center — point() is the cheapest draw call
+        py5.stroke(255, 255, 255, 200.0 * o * boost)
+        py5.stroke_weight(r * 0.5)
         py5.point(x, y)
