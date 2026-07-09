@@ -1,11 +1,15 @@
 """
-Visual polish rendering utilities.
+Visual rendering utilities.
 
-Hand aura rings, vignette overlay, and debug status display.
-These are pure rendering helpers — no state management.
+Hand aura: soft multi-layer filled glow rings.
+Startup hint: subtle guidance text when no hands detected.
+
+V3.5: Removed dead code (status overlay, vignette).
+All colors from Config.Palette.
 """
 
 import math
+from typing import Optional
 
 from config import Config
 from space_state import SpaceState
@@ -14,129 +18,121 @@ from space_state import SpaceState
 def draw_hand_aura(
     py5, px: float, py: float, speed: float, state: str, color: tuple
 ) -> None:
-    """Draw a single soft ring around hand position — minimal and clean.
+    """Draw an elegant soft-glow aura around hand position.
+
+    Uses concentric filled circles with decreasing alpha for a
+    smooth gradient-like effect. More layers in EXCITED state.
+    All colors from Config.Palette.
 
     Args:
-        py5: The py5 module/sketch.
-        px, py: Hand pixel position.
-        speed: Hand movement speed.
-        state: Current SpaceState name.
-        color: (r, g, b) aura color.
+        py5: py5 sketch module.
+        px, py: Hand position in pixels.
+        speed: Hand speed (0–~0.2).
+        state: SpaceState name.
+        color: (r, g, b) from Palette.HAND_LEFT or HAND_RIGHT.
     """
-    rings = (
-        Config.AURA_RINGS_EXCITED
-        if state == SpaceState.EXCITED
-        else Config.AURA_RINGS
-    )
     r, g, b = color
+    intensity = min(1.0, speed * 8.0)
+    layers = 3 if state == SpaceState.EXCITED else 2
+    base_radius = 18.0 + speed * 60.0
 
-    for i in range(rings):
-        radius = 30.0 + i * 20.0 + speed * 40.0
-        alpha = 40.0 * (1.0 - i * 0.5)
-        py5.stroke(r, g, b, alpha)
-        py5.stroke_weight(1.0)
-        py5.no_fill()
+    py5.no_stroke()
+
+    # Outer → inner glow layers
+    for i in range(layers, 0, -1):
+        t = i / layers  # 1.0 (outer) → 1/layers (inner)
+        radius = base_radius * t * 1.6
+        alpha = 25.0 * t * (1.0 + intensity)
+        py5.fill(r, g, b, alpha)
         py5.circle(px, py, radius)
 
+    # Soft core
+    core_r = 6.0 + speed * 20.0
+    py5.fill(255, 255, 255, 40.0 + intensity * 50.0)
+    py5.circle(px, py, core_r)
 
-def draw_vignette(py5) -> None:
-    """Draw a subtle radial vignette (throttled to every 10 frames)."""
-    if not Config.VIGNETTE_ENABLED:
-        return
-    if py5.frame_count % 10 != 0:
-        return
-
-    py5.no_stroke()
-    cx, cy = Config.WIDTH / 2, Config.HEIGHT / 2
-    max_r = math.sqrt(cx * cx + cy * cy)
-    for i in range(5):
-        r = max_r * (0.5 + i * 0.1)
-        alpha = 3.0 * (1.0 - i / 5.0)
-        py5.fill(0, 0, 0, alpha)
-        py5.circle(cx, cy, r * 2)
+    # Thin ring accent
+    ring_r = base_radius * 0.7
+    py5.no_fill()
+    py5.stroke(r, g, b, 50.0 + intensity * 40.0)
+    py5.stroke_weight(0.6)
+    py5.circle(px, py, ring_r)
 
 
-def draw_status_overlay(
+def draw_startup_hint(
     py5,
-    space_state: SpaceState | None,
-    particle_manager,
-    active_hands: list,
     has_hands: bool,
-    hand_left,
-    hand_right,
-    server_error: str | None,
-    message_count: int,
-    fps_display: float,
+    has_data: bool,
+    organism_count: int,
+    seed_count: int,
+    frame_count: int,
+    font: object = None,
 ) -> None:
-    """Draw debug status overlay with state, OSC, FPS, and layer info.
+    """Draw subtle guidance text for new users.
+
+    Shows different messages based on system state.
+    Fades out after 10 seconds or when hands appear.
 
     Args:
-        py5: The py5 module/sketch.
-        space_state: Current SpaceState instance.
-        particle_manager: Current ParticleManager instance.
-        active_hands: List of HandState instances with active hands.
+        py5: py5 sketch module.
         has_hands: Whether hands are currently detected.
-        hand_left, hand_right: HandState instances.
-        server_error: OSC server error string, if any.
-        message_count: Total OSC messages received.
-        fps_display: Smoothed FPS value.
+        has_data: Whether OSC data has ever been received.
+        organism_count: Number of active organisms.
+        seed_count: Number of pending seeds.
+        frame_count: Current frame number (for fade timing).
+        font: Optional cached py5 font.
     """
-    py5.push()
-    py5.no_stroke()
-    py5.fill(0, 0, 0, 140)
-    py5.rect(5, 5, 310, 105)
+    if font:
+        py5.text_font(font)
+    py5.text_size(13)
 
-    y = 22
-
-    # State indicator
-    if space_state is not None:
-        state_colors = {
-            SpaceState.IDLE: (100, 100, 255),
-            SpaceState.ACTIVE: (80, 255, 80),
-            SpaceState.EXCITED: (255, 180, 60),
-            SpaceState.CALM: (120, 200, 255),
-        }
-        sc = state_colors.get(space_state.state, (200, 200, 200))
-        py5.fill(*sc, 230)
-        py5.text(
-            f"State: {space_state.state} ({space_state.time_in_state:.1f}s)",
-            14, y,
-        )
-
-    y += 20
-
-    # OSC status
-    if server_error:
-        py5.fill(255, 80, 80, 230)
-        py5.text(f"OSC ERROR: {server_error[:40]}", 14, y)
-    elif has_hands:
-        parts = []
-        for hs in active_hands:
-            label = "R" if hs.side == "right" else "L"
-            parts.append(
-                f"{label}:({hs.raw_x:.2f},{hs.raw_y:.2f}) spd={hs.speed:.3f}"
-            )
-        py5.fill(80, 255, 80, 230)
-        py5.text(f"OSC live | {'  '.join(parts)}", 14, y)
-    elif hand_left.has_data or hand_right.has_data:
-        py5.fill(255, 200, 60, 230)
-        py5.text(f"OSC | hands lost ({message_count} msgs)", 14, y)
+    # Determine message
+    if not has_data and frame_count < 600:
+        msg = "Waiting for hand tracker..."
+        alpha = _fade_alpha(frame_count, 0, 300, 180)
+    elif not has_hands and organism_count == 0 and seed_count == 0:
+        msg = "Hold your hand still to plant a seed"
+        alpha = _fade_alpha(frame_count, 120, 600, 120)
+    elif not has_hands and organism_count > 0:
+        msg = f"{organism_count} organism{'s' if organism_count > 1 else ''} growing in the space"
+        alpha = _fade_alpha(frame_count, 0, 400, 100)
+    elif has_hands and seed_count > 0:
+        msg = "Keep holding... seed is gaining energy"
+        alpha = 100
     else:
-        py5.fill(255, 160, 60, 230)
-        py5.text("Waiting for tracker...", 14, y)
-        py5.fill(180, 180, 180, 200)
-        py5.text("   cd python_tracker && python main.py", 14, y + 18)
+        return  # Don't show when hands are active
 
-    y += 20
+    if alpha < 5:
+        return
 
-    # FPS + layer counts
-    if particle_manager is not None:
-        counts = particle_manager.layer_counts()
-        py5.fill(200, 200, 200, 200)
-        py5.text(
-            f"FPS:{fps_display:.0f} | BG:{counts['background']} "
-            f"INT:{counts['interaction']} HL:{counts['highlight']}",
-            14, y + 2,
-        )
-
+    py5.push()
+    py5.text_align(py5.CENTER)
+    py5.fill(180, 190, 220, alpha)
+    py5.text(msg, Config.WIDTH / 2, Config.HEIGHT - 40)
+    py5.text_align(py5.LEFT)
     py5.pop()
+
+
+def _fade_alpha(frame: int, start: int, end: int, peak: int) -> float:
+    """Compute fade-in-then-out alpha for a frame range.
+
+    Args:
+        frame: Current frame count.
+        start: Frame when fade-in begins.
+        end: Frame when fade-out completes.
+        peak: Maximum alpha value.
+
+    Returns:
+        Alpha value 0–peak.
+    """
+    if frame < start:
+        return 0.0
+    if frame < (start + end) / 2:
+        # Fade in
+        t = (frame - start) / ((end - start) / 2)
+        return peak * min(1.0, t)
+    if frame < end:
+        # Fade out
+        t = (frame - (start + end) / 2) / ((end - start) / 2)
+        return peak * max(0.0, 1.0 - t)
+    return 0.0

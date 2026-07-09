@@ -2,11 +2,11 @@
 Particle manager orchestrating three independent layers.
 
 Layers:
-    1. Background  (~1200) — slow drift, large soft particles, no trail, 2 glow layers
-    2. Interaction (~600)  — main flow followers, trail, 3 glow layers
-    3. Highlight   (~120)  — bright, fast, long trails, 3 glow layers
+    1. Background  (~800)  — slow, large, 1 glow layer, no influence
+    2. Interaction (~400)  — main flow followers, 2 glow layers
+    3. Highlight   (~80)   — bright, fast, 2 glow layers, strongest influence
 
-Each layer has its own Particle parameters and influence weight multiplier.
+V3.5: Simplified display, removed trail logic.
 """
 
 from config import Config
@@ -16,19 +16,11 @@ from influence_field import InfluenceField
 
 
 class ParticleManager:
-    """Orchestrator for three particle layers.
-
-    Public interface:
-        update(flow_field, influence_field, state_multipliers)
-        display(py5, influence_field, trail_mult)
-        total_count() → int
-    """
+    """Orchestrator for three particle layers."""
 
     def __init__(self) -> None:
-        """Create all three particle layers with per-layer config."""
         w, h = Config.WIDTH, Config.HEIGHT
 
-        # ---- Layer 1: Background — slow, soft, no trail ----
         self.bg_particles: list[Particle] = [
             Particle(
                 width=w, height=h, layer=Particle.LAYER_BG,
@@ -38,7 +30,6 @@ class ParticleManager:
                 size_max=Config.PARTICLE_BG_SIZE_MAX,
                 life_min=Config.PARTICLE_BG_LIFE_MIN,
                 life_max=Config.PARTICLE_BG_LIFE_MAX,
-                trail_length=Config.PARTICLE_BG_TRAIL_LENGTH,
                 glow_layers=Config.PARTICLE_BG_GLOW_LAYERS,
                 color_base=Config.Palette.BG_BASE,
                 color_glow=Config.Palette.BG_GLOW,
@@ -46,7 +37,6 @@ class ParticleManager:
             for _ in range(Config.PARTICLE_BG_COUNT)
         ]
 
-        # ---- Layer 2: Interaction — responsive, trails ----
         self.int_particles: list[Particle] = [
             Particle(
                 width=w, height=h, layer=Particle.LAYER_INT,
@@ -56,7 +46,6 @@ class ParticleManager:
                 size_max=Config.PARTICLE_INT_SIZE_MAX,
                 life_min=Config.PARTICLE_INT_LIFE_MIN,
                 life_max=Config.PARTICLE_INT_LIFE_MAX,
-                trail_length=Config.PARTICLE_INT_TRAIL_LENGTH,
                 glow_layers=Config.PARTICLE_INT_GLOW_LAYERS,
                 color_base=Config.Palette.INT_BASE,
                 color_glow=Config.Palette.INT_GLOW,
@@ -64,7 +53,6 @@ class ParticleManager:
             for _ in range(Config.PARTICLE_INT_COUNT)
         ]
 
-        # ---- Layer 3: Highlight — bright, fast, long trails ----
         self.hl_particles: list[Particle] = [
             Particle(
                 width=w, height=h, layer=Particle.LAYER_HL,
@@ -74,7 +62,6 @@ class ParticleManager:
                 size_max=Config.PARTICLE_HL_SIZE_MAX,
                 life_min=Config.PARTICLE_HL_LIFE_MIN,
                 life_max=Config.PARTICLE_HL_LIFE_MAX,
-                trail_length=Config.PARTICLE_HL_TRAIL_LENGTH,
                 glow_layers=Config.PARTICLE_HL_GLOW_LAYERS,
                 color_base=Config.Palette.HL_BASE,
                 color_glow=Config.Palette.HL_GLOW,
@@ -92,18 +79,9 @@ class ParticleManager:
         influence_field: InfluenceField,
         flow_mult: float = 1.0,
         influence_mult: float = 1.0,
-        trail_mult: float = 1.0,
+        trail_mult: float = 1.0,  # ignored (V3.5)
     ) -> None:
-        """Update all particles across all layers.
-
-        Args:
-            flow_field: FlowField instance.
-            influence_field: InfluenceField instance.
-            flow_mult: Global flow strength multiplier (from SpaceState).
-            influence_mult: Global influence multiplier (from SpaceState).
-            trail_mult: Global trail multiplier (from SpaceState) — unused
-                in update, passed through to display.
-        """
+        """Update all particles: forces → physics → respawn."""
         self._update_layer(
             self.bg_particles, flow_field, influence_field,
             flow_mult, influence_mult * Config.INFLUENCE_WEIGHT_BG,
@@ -125,14 +103,11 @@ class ParticleManager:
         flow_mult: float,
         influence_mult: float,
     ) -> None:
-        """Update a single layer: forces → physics → respawn."""
         for p in particles:
-            # Flow field
             fvx, fvy = flow_field.get_force(p.position[0], p.position[1])
             if flow_mult != 0.0:
                 p.apply_force(fvx * flow_mult, fvy * flow_mult)
 
-            # Influence
             if influence_mult != 0.0:
                 ifx, ify = influence_field.get_force(
                     p.position[0], p.position[1]
@@ -140,7 +115,6 @@ class ParticleManager:
                 p.apply_force(ifx * influence_mult, ify * influence_mult)
 
             p.update()
-
             if p.is_dead():
                 p.respawn()
 
@@ -148,35 +122,25 @@ class ParticleManager:
     # Display
     # ============================================================
 
-    def display(
-        self, py5, influence_field: InfluenceField, trail_mult: float = 1.0
-    ) -> None:
-        """Render all layers in order: BG → INT → HL.
-
-        Perf optimizations:
-        - BG layer: no influence lookup (barely affected anyway)
-        - BG layer: reduced trail_mult
-        - INT/HL: influence lookup for brightness boost
-        """
+    def display(self, py5, influence_field: InfluenceField,
+                trail_mult: float = 1.0) -> None:
+        """Render all layers. BG gets no influence lookup (perf)."""
         has_hands = influence_field.has_active_hands()
 
-        # Background — no influence lookup, reduced trail
         for p in self.bg_particles:
-            p.display(py5, influence=0.0, trail_mult=trail_mult * 0.3)
+            p.display(py5, influence=0.0)
 
-        # Interaction — full influence
         for p in self.int_particles:
             inf = influence_field.get_influence_at(
                 p.position[0], p.position[1]
             ) if has_hands else 0.0
-            p.display(py5, influence=inf, trail_mult=trail_mult)
+            p.display(py5, influence=inf)
 
-        # Highlight — amplified
         for p in self.hl_particles:
             inf = influence_field.get_influence_at(
                 p.position[0], p.position[1]
             ) if has_hands else 0.0
-            p.display(py5, influence=inf, trail_mult=trail_mult * 1.5)
+            p.display(py5, influence=inf)
 
     # ============================================================
     # Info

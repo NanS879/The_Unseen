@@ -1,0 +1,22 @@
+{
+  "version": 3,
+  "saved_at": 1783568829.2787962,
+  "saved_at_iso": "2026-07-09T11:47:09",
+  "energy": {
+    "energy": 74.9344657153449
+  },
+  "behavior": {
+    "total_distance": 61654.98944132173,
+    "avg_speed": 0.16909269547814523,
+    "speed_samples": 6995,
+    "total_dwell_time": 23.348000000000003,
+    "total_active_time": 276.5460000000005,
+    "total_idle_time": 77.09299999999999,
+    "seed_count": 14,
+    "interaction_count": 32,
+    "session_start": 1783562188.0587387
+  },
+  "ecosystem": {
+    "organisms": [
+      {
+        "seed": 

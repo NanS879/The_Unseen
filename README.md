@@ -5,493 +5,376 @@
 
 ## 项目简介
 
-**The Unseen** 是一个探索人与数字空间之间隐性关系的生成式交互艺术作品。
+**The Unseen** 是一个探索人与数字空间关系的生成式交互艺术装置。
 
-通过摄像头与 AI 感知，你的手在由数千个粒子组成的数字生态系统中产生不可见的力场——划过空气，留下光的痕迹。你不是在控制粒子，而是在改变整个空间。
+摄像头感知你的手——**每一种手势都是一种空间语言**。张开手掌建立连接，握拳聚集能量，捏合创造生命。你不是在操作软件，而是在与一个会呼吸、会记忆、会生长的数字生态系统对话。
 
 ---
 
 ## 版本
 
-### V3 — Digital Organism（数字生命） ← 当前版本
+### V4 — Spatial Gesture Language ← 当前版本
 
-空间不仅是响应式的——它**记住你**，并因为你而**生长**：
+- 🔌 **单进程架构** — `python main.py` 一行启动
+- 🖐️ **空间手势语言** — 6 种空间能力：Connect / Gather / Create / Guide / Expand / Merge
+- 🎭 **空间情绪系统** — Calm / Focused / Hope / Curiosity / Freedom / Harmony → 调制流场/辉光/色温
+- 🌊 **涟漪系统** — 统一交互反馈语言
+- ✨ **记忆碎片** — 可收集光点，驱动探索
+- 🌱 **数字生命** — DLA 有机生长 + 生态系统
+- 💾 **持久化** — JSON 自动保存，重启恢复
 
-- 🌱 **记忆种子** — 手停留超过 2 秒，种下一颗"记忆种子"
-- 🔬 **DLA 生长** — 种子用扩散限制聚合算法生长为有机分枝结构
-- ⚡ **能量系统** — 移动产生能量，停留将能量转化为生命生长
-- 🌲 **数字森林** — 多个生命体共存，距离近则竞争、适中则连接、远则独立
-- 🌅 **昼夜循环** — 5 分钟周期，流场/辉光/生长/色温随"时间"变化
-- 📊 **行为分析** — 统计总距离、平均速度、停留时间、交互次数
-- 💾 **持久化** — JSON 自动存储，重启后空间继续生长
+### V3 — Digital Organism
 
-### V2 — Responsive Space（响应式空间）
+记忆种子 · DLA 生长 · 能量系统 · 数字森林 · 昼夜循环 · 持久化
 
-整个空间成为一个具有生命感的数字生态系统：
+### V2 — Responsive Space
 
-- 🌬️ **呼吸感** — Perlin Noise 流场持续缓慢演化
-- 🌊 **流动感** — 三层粒子叠加，运动尾迹
-- 🎚️ **层次感** — Background / Interaction / Highlight 三层独立行为
-- 🧬 **生命周期** — 每个粒子经历 birth → growth → peak → decay → death → respawn
-- 🧠 **空间状态机** — IDLE / ACTIVE / EXCITED / CALM 四态自动切换
-- 🎨 **统一色板** — 蓝 / 紫 / 金
+Perlin Noise 流场 · 手部影响场 · 三层粒子 · 空间状态机
 
-### V1 — Basic Interaction（基础交互）
+### V1 — Basic Interaction
 
-> 用户移动手掌，粒子跟随运动。（已完成）
+摄像头 → MediaPipe → 粒子跟随手
 
 ---
 
-## 技术栈
+## 快速开始
 
-| 层级 | 技术 | 用途 |
-|------|------|------|
-| 感知 | **MediaPipe Hands** | 双手 21 点关键点检测 |
-| 采集 | **OpenCV** | 摄像头实时捕获 |
-| 通信 | **python-osc** | UDP 进程间实时通信 |
-| 渲染 | **py5** (Processing Python) | 生成艺术 / 粒子系统 / Perlin Noise |
-| 数学 | **Perlin Noise 3D** | 流场向量生成 |
-
----
-
-## 项目结构
-
+```bash
+pip install -r requirements.txt
+cd py5_visual
+python main.py
 ```
-The_Unseen/
-├── python_tracker/              # 手部追踪 + OSC 发送端
-│   ├── main.py                  # 摄像头采集主循环
-│   ├── hand_tracking.py         # MediaPipe Hands 封装（双手）
-│   ├── osc_sender.py            # OSC 发送客户端
-│   ├── test_osc_receiver.py     # OSC 接收测试工具
-│   └── requirements.txt
-│
-├── py5_visual/                  # 生成艺术渲染端
-│   ├── main.py                  # py5 主入口（V2+V3 编排）
-│   ├── config.py                # 集中参数管理（V2+V3 所有参数）
-│   │
-│   ├── V2 模块：
-│   ├── flow_field.py            # Perlin Noise 2D 流场
-│   ├── influence_field.py       # 手部影响场（引力 + 尾流）
-│   ├── particle.py              # 粒子（生命周期 + 尾迹 + 发光）
-│   ├── particle_manager.py      # 三层粒子编排器
-│   ├── space_state.py           # 空间状态机（IDLE/ACTIVE/EXCITED/CALM）
-│   ├── hand_state.py            # 手部状态 + OSC 服务端
-│   ├── render_utils.py          # 视觉润色（光环、暗角、状态面板）
-│   │
-│   ├── V3 模块：
-│   ├── memory_seed.py           # 记忆种子（位置/能量/序列化）
-│   ├── growth_algorithm.py      # DLA 扩散限制聚合生长引擎
-│   ├── organism.py              # 数字生命体 + 生态系统管理器
-│   ├── energy_manager.py        # 统一能量系统
-│   ├── behavior_analyzer.py     # 用户行为统计分析
-│   ├── time_system.py           # 昼夜循环时间系统
-│   ├── persistence.py           # JSON 持久化存储
-│   │
-│   └── requirements.txt
-│   ├── particle.py              # 粒子（生命周期 + 运动尾迹 + 发光）
-│   ├── particle_manager.py      # 三层粒子编排器
-│   ├── space_state.py           # 空间状态机（4 态）
-│   ├── hand_state.py            # 手部状态 + OSC 服务端
-│   ├── render_utils.py          # 视觉润色（光环、暗角、状态面板）
-│   └── requirements.txt
-│
-├── requirements.txt             # 统一依赖
-├── .gitignore
-└── README.md
+
+```bash
+python main.py --fresh      # 全新开始
+python main.py --release    # Release 模式
+python main.py --no-camera  # 无摄像头演示
 ```
+
+| 按键 | 功能 |
+|------|------|
+| `D` | 调试面板（FPS 火花图、能量、手势、能力状态、情绪） |
+| `F` | FPS 角标 |
+| `R` | Debug / Release 切换 |
+| `Q` | 退出 + Presence Report |
 
 ---
 
 ## 系统架构
 
 ```
-Config（集中参数）
-    │
-    ├──→ FlowField ────────────┐
-    │     Perlin Noise 流场     │
-    │     · get_force(x,y)     │
-    │     · enabled toggle     │
-    │                          │
-    ├──→ InfluenceField ───────┤
-    │     手部影响场            ├──→ ParticleManager ──→ main.py
-    │     · 引力 + 尾流        │     三层粒子编排         draw() 循环
-    │     · 反平方/高斯衰减    │
-    │                          │
-    └──→ SpaceState ───────────┘
-         空间状态机
-         · IDLE/ACTIVE/EXCITED/CALM
-         · 状态驱动乘数
+Camera → MediaPipe (21 landmarks) → HandState (EMA)
+                                        │
+                    ┌───────────────────┤
+                    ▼                   ▼
+             GestureManager      InfluenceField
+               (7 gestures)        (引力+尾流)
+                    │                   │
+                    ▼                   ▼
+          SpaceAbilityManager     FlowField
+            (6 abilities)      (Perlin Noise)
+                    │                   │
+                    ├───────────────────┤
+                    ▼                   ▼
+             SpaceMood           ParticleManager
+           (modulates flow,       (3 layers)
+            glow, color)              │
+                    │                 ▼
+                    └──────→  RippleManager
+                              FragmentManager
+                              OrganismManager
+                              EnergyManager
+                                    │
+                                    ▼
+                               Render (py5)
+                                    │
+                                    ▼
+                            Persistence (JSON)
 ```
 
 ---
 
-## 子系统详解
+## 空间能力系统
 
-### 1. FlowField（流场）— [flow_field.py](py5_visual/flow_field.py)
+核心理念：**Gesture → Intent → Space Ability → Space Mood → Response**
 
-二维 Perlin Noise 向量场。空间中每个位置都有一个方向向量，粒子每帧根据位置读取对应方向。
+手势不是按钮。每种手势对应一种"空间能力"——持续保持手势来充能，充能完成后能力激活。
+中途松开会取消，保证每个动作都有意图。
 
-| 参数 | 默认值 | 说明 |
-|------|--------|------|
-| `cell_size` | 25 | 网格精度（越小越精细） |
-| `noise_scale` | 0.004 | 空间频率（越小漩涡越大） |
-| `time_scale` | 0.006 | 时间演化速度 |
-| `flow_strength` | 0.30 | 基础力强度 |
-| `enabled` | True | 可独立开关，方便调试 |
-
-**接口：** `update(time)`, `get_force(x, y)`, `toggle()`
-
-### 2. InfluenceField（用户影响场）— [influence_field.py](py5_visual/influence_field.py)
-
-根据手部位置生成空间影响区域。每个手产生两个力：
-
-- **引力** — 将粒子拉向手的位置，随距离衰减
-- **尾流** — 沿手运动方向推动粒子
-
-| 参数 | 默认值 | 说明 |
-|------|--------|------|
-| `radius` | 250 px | 最大影响半径 |
-| `strength` | 800 | 基础引力强度 |
-| `falloff` | inverse_square | 衰减方式（或 gaussian） |
-| `wake_strength` | 3.0 | 尾流推力 |
-
-**支持多手叠加**，天然支持未来多人交互扩展。
-
-**接口：** `update(hands)`, `get_force(px, py)`, `get_influence_at(px, py)`
-
-### 3. Particle（粒子）— [particle.py](py5_visual/particle.py)
-
-每个粒子拥有完整的生命周期和运动尾迹。
-
-#### 生命周期
+### 能力状态机
 
 ```
-age/life:  0%      10%      30%               70%       100%
-            │ birth │ growth │      peak        │ decay  │ dead
- opacity:   0→255    255      255              255→0      respawn
-    size:   0.3→1.0  1.0→1.15  1.0              1.0→0.3   respawn
+IDLE → PREPARING → CHARGING → ACTIVATED → COOLDOWN → IDLE
+         ↑                          ↑
+    手势开始                    充能完成
+    (0.3~2.0s)               (应用效果+情绪)
 ```
 
-#### 运动尾迹
+### 六种空间能力
 
-- 存储最近 N 帧位置（deque），绘制为 Polyline
-- 尾迹长度随当前速度动态缩放（越快尾迹越长）
-- 透明度从头向尾衰减
+| 手势 | 能力 | 充能 | 冷却 | 情绪 | 视觉反馈 |
+|------|------|------|------|------|----------|
+| 🖐️ Open Palm | **Connect** 连接 | 0.5s | 3s | Calm | 蓝色柔光扩散，粒子缓慢聚拢 |
+| ✊ Fist | **Gather** 聚集 | 1.0s | 3s | Focused | 金色能量环收缩，流场加速 |
+| 🤏 Pinch | **Create** 创造 | 1.5s | 5s | Hope | 金色种子形成动画，紫色涟漪 |
+| ☝️ Point | **Guide** 引导 | 0.3s | 1s | Curiosity | 指尖轨迹光点，流场跟随 |
+| 🙌 Expand | **Expand** 扩张 | 0.8s | 4s | Freedom | 青色呼吸环扩展，粒子分散 |
+| 🙌 Compress | **Merge** 融合 | 2.0s | 6s | Harmony | 紫色连接桥，有机体连接 |
 
-#### 发光渲染
+### Connect（连接）— Open Palm
 
-4 层同心圆：外层光晕 → 中层辉光 → 内层核心 → 灼热白心
+与空间建立平静连接。粒子主动靠近，流场减速，辉光柔和。
+**情绪：Calm** → 流场 ×0.6 / 辉光 ×0.7 / 色温偏蓝
 
-**接口：** `apply_force()`, `update()`, `display()`, `is_dead()`, `respawn()`, `life_stage()`, `current_opacity()`, `current_size()`
+### Gather（聚集）— Fist
 
-### 4. ParticleManager（粒子管理器）— [particle_manager.py](py5_visual/particle_manager.py)
+聚焦空间能量。流场向拳头收缩，能量快速增长，附近种子获得生长加速。
+**情绪：Focused** → 流场 ×1.4 / 辉光 ×1.3 / 色温偏暖
 
-三层粒子系统，每层独立参数和行为：
+### Create（创造）— Pinch
 
-| 层 | 名称 | 数量 | 速度 | 尺寸 | 颜色 | 受手影响 | 尾迹 |
-|----|------|------|------|------|------|----------|------|
-| 1 | Background | 2000 | 慢 (1.5) | 大 (2–5) | 深蓝 | ×0.05 | 短 |
-| 2 | Interaction | 800 | 中 (3.5) | 中 (1.5–4) | 蓝紫 | ×1.0 | 中 |
-| 3 | Highlight | 150 | 快 (5.0) | 小 (1–3.5) | 暖金 | ×2.0 | 长 |
+在捏合位置创造新的数字生命。金色种子出现，随后自动生长为 DLA 有机体。
+**情绪：Hope** → 流场 ×0.9 / 辉光 ×1.2 / 色温暖金
+冷却最长（5s），每次创造都有仪式感。
 
-**接口：** `update(flow, influence, multipliers)`, `display(py5, influence, trail_mult)`
+### Guide（引导）— Point
 
-### 5. SpaceState（空间状态机）— [space_state.py](py5_visual/space_state.py)
+指尖引导空间流向。流场跟随食指方向，粒子沿轨迹运动，有机体缓慢靠近。
+**情绪：Curiosity** → 流场 ×1.2 / 辉光 ×0.9
+充能最快（0.3s），适合持续使用。
 
-空间根据用户行为自动切换"情绪"：
+### Expand（扩张）— 双手展开
 
-```
-         ┌──────────────────────────────┐
-         │                              │
-    ┌────▼────┐   手出现    ┌───────────┴──┐   快速挥手    ┌──────────┐
-    │  IDLE   │───────────→│   ACTIVE    │──────────────→│ EXCITED  │
-    │  无人   │←───────────│   活跃中     │               │  剧烈扰动 │
-    └─────────┘  超时消失   └─────────────┘               └─────┬────┘
-         ▲                              ↑                       │
-         │          ┌──────────┐        │        减速           │
-         └──────────│   CALM   │←───────┘                       │
-             超时   │ 恢复平静 │←───────────────────────────────┘
-                   └──────────┘
-```
+空间深呼吸。流场大幅减速，粒子向外扩散，大范围涟漪。
+**情绪：Freedom** → 流场 ×0.5 / 辉光 ×0.6 / 色温偏青
 
-**状态驱动乘数：**
+### Merge（融合）— 双手靠近
 
-| 状态 | 流场速度 | 影响力 | 尾迹 | 背景残影 |
-|------|----------|--------|------|----------|
-| IDLE | ×0.5 | ×0.0 | ×0.5 | 浅 (α=8) |
-| ACTIVE | ×1.0 | ×1.0 | ×1.0 | 中 (α=14) |
-| EXCITED | ×2.0 | ×1.8 | ×2.0 | 深 (α=22) |
-| CALM | ×0.7 | ×0.5 | ×0.8 | 中 (α=14) |
-
-**接口：** `update(has_hands, max_speed)`, `state`, `flow_multiplier`, `influence_multiplier`, `trail_multiplier`, `trail_alpha`, `just_entered`
-
-### 6. Config（集中参数）— [config.py](py5_visual/config.py)
-
-所有可调参数集中管理，无魔法数字。
-
-```python
-from config import Config
-
-# 画布
-Config.WIDTH = 1920
-Config.HEIGHT = 1080
-
-# 粒子数量
-Config.PARTICLE_BG_COUNT = 3000
-
-# 流场
-Config.FLOW_STRENGTH = 0.5
-
-# 影响力
-Config.INFLUENCE_RADIUS = 350
-
-# 状态阈值
-Config.STATE_EXCITED_SPEED = 0.08
-
-# 颜色
-Config.Palette.HL_BASE = (255, 150, 50)  # 高亮层改为橙色
-```
+两个有机体通过光桥连接。需要持续保持 2 秒——最长充能，最具仪式感。
+**情绪：Harmony** → 流场 ×0.8 / 辉光 ×1.1 / 色温偏紫
 
 ---
 
-## V3 子系统详解
+## 手势识别
 
-### 7. MemorySeed（记忆种子）— [memory_seed.py](py5_visual/memory_seed.py)
+基于 MediaPipe 21 点手部关键点。每个手势通过指关节几何关系实时判定。
 
-当手在某个位置停留超过 2 秒，一颗记忆种子被种下。
+### 单手手势
 
-| 参数 | 默认值 | 说明 |
-|------|--------|------|
-| `SEED_DWELL_RADIUS` | 50 px | 手必须在此范围内 |
-| `SEED_DWELL_TIME` | 2.0 s | 创建种子所需停留时间 |
-| `SEED_MAX_ENERGY` | 100.0 | 最大能量 |
-| `SEED_ENERGY_RATE` | 15.0/s | 停留时能量获取速率 |
-| `SEED_GROWTH_THRESHOLD` | 60.0 | 生长所需能量阈值 |
+| 手势 | 检测方法 | 充能 | 冷却 |
+|------|----------|------|------|
+| 🖐️ Open Palm | 4 指伸展 (tip-to-MCP > 50%) | 0.5s | 3s |
+| ✊ Fist | 4 指卷曲 (tip-to-wrist < 70%) | 1.0s | 3s |
+| 🤏 Pinch | 拇指尖↔食指尖 < 6% | 1.5s | 5s |
+| ☝️ Point | 食指伸展 + 其余 3 指卷曲 | 0.3s | 1s |
+| ✌️ Victory | 食指+中指伸展，其余卷曲 | — | 2s |
+| 💨 Swipe | 手速 > 0.06 | — | 2s |
+| 🧘 Hold | 手速 < 0.015 持续 | — | — |
 
-**接口：** `update(dt, hand_near, speed)`, `display(py5)`, `serialize()/deserialize()`
+### 双手交互
 
-### 8. DLA Growth（生长引擎）— [growth_algorithm.py](py5_visual/growth_algorithm.py)
+| 交互 | 检测条件 | 效果 |
+|------|----------|------|
+| Expand | 双手距离增大 > 30% | 流场发散 |
+| Compress | 双手距离缩小 > 30% | 能量爆发 +8 |
+| Cross | 双手 X 轴位置互换 | 紫色涟漪 |
+| Sync | 双手同向移动 | 螺旋流场 |
 
-扩散限制聚合（Diffusion Limited Aggregation）— 模拟闪电、珊瑚、树根的自然分枝形态。
+---
 
-- 每帧释放 25 个 walker，从边界随机游走
-- 碰到已有结构就"粘住"，形成新的生长点
-- 空间哈希网格 O(1) 碰撞检测
-- 同一个种子每次生长结果都不同（不可预测性）
+## 数字生命系统
 
-| 参数 | 默认值 | 说明 |
-|------|--------|------|
-| `DLA_WALKERS_PER_FRAME` | 25 | 每帧 walker 数量 |
-| `DLA_MAX_STEPS` | 120 | walker 最大步数 |
-| `DLA_STICK_RADIUS` | 3.0 px | 接触距离 |
-| `DLA_MAX_RADIUS` | 140 px | 最大生长半径 |
+### 记忆种子
 
-### 9. Organism（数字生命体）— [organism.py](py5_visual/organism.py)
+手在同一区域停留约 1.5 秒，自动生成一颗记忆种子。种子以紫色脉冲光点显示，继续停留积累能量。能量达阈值（40）后触发 DLA 生长。
 
-Organism = MemorySeed + DLAEngine。种子能量达标后，消耗全局能量启动生长。
+| 参数 | 值 |
+|------|-----|
+| 停留半径 | 80 px |
+| 停留时间 | 1.5 s |
+| 速度阈值 | < 0.10 |
+| 生长阈值 | 40 能量 |
 
-**生态系统规则：**
-- 距离 < 40px：竞争，双方生长速度降低
-- 距离 40–200px：独立生长，绘制连接线（菌丝网络）
-- 距离 > 200px：完全独立
-- 最多 8 个生命体共存（超出则移除最旧的）
+### DLA 有机生长
 
-### 10. EnergyManager（能量系统）— [energy_manager.py](py5_visual/energy_manager.py)
+扩散限制聚合算法（Diffusion Limited Aggregation）——模拟闪电、珊瑚、树根的自然分枝形态。每帧释放 40 个 walker 随机游走，碰到已有结构就"粘住"。每次生长结果都不同。
 
-统一的全局能量池。所有系统都从中获取能量。
+### 数字生态规则
+
+- 距离 < 40px → 竞争，双方生长减速
+- 距离 40–200px → 独立 + 紫色连接线
+- 距离 > 200px → 完全独立
+- 最多 8 个有机体共存
+
+### 能量系统
 
 ```
-移动 → +能量（速度 × 8.0/s）
-静止 → 能量转化为生长
-无人 → 衰减（-1.5/s）
+手移动  → +能量（速度 × 增益率）
+手停留  → 能量转化为生长
+无人    → 能量缓慢衰减 (-1.5/s)
+收集碎片 → 立即 +5~20 能量
+Gather  → +5 能量
+Connect → +3 能量
+Expand  → +8 能量
 ```
 
-**能量乘数：** 流场 0.5–1.0 | 辉光 0.4–1.0 | 生长 0.2–1.0 | 密度 0.5–1.0
+### 昼夜循环
 
-### 11. TimeSystem（时间系统）— [time_system.py](py5_visual/time_system.py)
-
-5 分钟昼夜循环。正弦波驱动，影响整个空间的"情绪"：
+5 分钟完整昼夜周期。正弦波驱动：
 
 | 时段 | 流场 | 辉光 | 生长 | 色温 |
 |------|------|------|------|------|
 | 🌅 黎明 | ×1.0 | 暗 | ×1.4 快 | 中性 |
-| ☀️ 正午 | ×1.3 快 | ×0.7 亮 | ×0.6 慢 | 暖 |
+| ☀️ 正午 | ×1.3 | ×0.7 亮 | ×0.6 | 暖 |
 | 🌆 黄昏 | ×1.0 | 暗 | ×1.4 快 | 中性 |
-| 🌙 深夜 | ×0.7 慢 | ×1.3 暗 | ×0.6 慢 | 冷 |
+| 🌙 深夜 | ×0.7 | ×1.3 | ×0.6 | 冷 |
 
-### 12. Persistence（持久化）— [persistence.py](py5_visual/persistence.py)
+### 持久化
 
-每 30 秒自动保存到 `the_unseen_state.json`。保存内容：
+每 30 秒自动保存到 `the_unseen_state.json`：
+能量 · 行为统计 · 所有有机体（种子 + 完整 DLA 点云） · 时间系统
 
-- 能量状态
-- 行为统计（总距离、速度、停留时间…）
-- 所有生命体（种子 + 完整生长结构）
-- 时间系统状态
+重启自动恢复——**空间不会重置，它记住你。**
 
-下次启动自动恢复——**空间不会重置，它记住你**。
+---
 
-```bash
-python main.py --fresh   # 清除记忆，从头开始
+## 项目结构
+
+```
+py5_visual/                          # 26 个模块，py5 flat import
+│
+├── main.py                          # 入口 — 单循环：摄像头→手势→能力→模拟→渲染
+├── config.py                        # 所有参数（~250 行）
+│
+├── 感知层
+│   ├── camera_tracker.py            # 内联 MediaPipe + OpenCV + 21 点 landmarks
+│   └── hand_state.py                # 手部位置 EMA 平滑
+│
+├── 手势 + 能力层
+│   ├── gesture_manager.py           # 手势识别 + 状态机 + 双手检测
+│   ├── ability_base.py              # BaseAbility + SpaceMood + AbilityState
+│   ├── ability_manager.py           # 6 种能力 + SpaceAbilityManager
+│   └── interaction_rules.py         # 非能力手势 → 涟漪效果
+│
+├── 模拟层
+│   ├── flow_field.py                # Perlin Noise 2D 流场
+│   ├── influence_field.py           # 手部影响场（引力 + 尾流）
+│   ├── particle.py                  # 粒子（5 阶段生命周期 + smoothstep 缓动）
+│   ├── particle_manager.py          # 三层粒子编排（800/400/80）
+│   └── space_state.py               # 空间状态机（IDLE/ACTIVE/EXCITED/CALM）
+│
+├── 生命层
+│   ├── memory_seed.py               # 记忆种子（位置/能量/脉冲动画）
+│   ├── growth_algorithm.py          # DLA 引擎（空间哈希 O(1) 碰撞）
+│   ├── organism.py                  # 生命体 + 生态管理器
+│   ├── energy_manager.py            # 能量池 + 乘数调制
+│   ├── behavior_analyzer.py         # 行为统计（距离/速度/停留/交互次数）
+│   ├── time_system.py               # 昼夜循环（正弦波 + 相位调制）
+│   └── persistence.py               # JSON 保存/恢复
+│
+├── 交互层
+│   ├── ripple.py                    # 涟漪（扩展环 + 粒子推力）
+│   └── fragment.py                  # 记忆碎片（飞向手 + 收集奖励）
+│
+├── 渲染 + 调试
+│   ├── render_utils.py              # 手部柔光光环 + 启动引导提示
+│   └── debug_overlay.py             # 玻璃态 HUD + FPS 火花图
+│
+└── 基础设施
+    ├── logger.py                    # 结构化日志（Debug/Release）
+    └── easing.py                    # 缓动函数（smoothstep / ease-in-out）
 ```
 
 ---
 
-## 安装
+## 交互行为
 
-```bash
-# 克隆仓库
-git clone <repo-url>
-cd The_Unseen
+| 行为 | 即时反馈 | 系统影响 |
+|------|----------|----------|
+| 手进入 | 粒子聚拢，ACTIVE 状态 | 能量开始积累 |
+| 缓慢移动 | 粒子跟随，柔光光环，涟漪 | 能量缓慢增长 |
+| 快速挥手 | 涟漪爆发，EXCITED 状态 | 能量快速增长 |
+| 🖐️ **张开手掌 0.5s** | 蓝色柔光扩散 | Connect 激活 → Calm |
+| ✊ **握拳 1.0s** | 金色能量环收缩 | Gather 激活 → Focused |
+| 🤏 **捏合 1.5s** | 金色种子形成 + 紫色涟漪 | Create → 新生命诞生 |
+| ☝️ **食指指向 0.3s** | 指尖光点轨迹 | Guide → 流场跟随 |
+| 🙌 **双手展开 0.8s** | 青色呼吸环扩展 | Expand → Freedom |
+| 🙌 **双手靠近 2.0s** | 紫色连接桥 | Merge → Harmony |
+| ✌️ V 手势 | 白色大涟漪 | 模式轮换 |
+| 手停留 | 紫色脉冲种子 | 种子积累能量 |
+| 继续停留 | DLA 白色分枝生长 | 有机体诞生 |
+| 靠近碎片 | 碎片加速飞向手 | 收集能量 |
+| 手离开 | IDLE，能量衰减 | 生命体留在原地 |
+| 按 Q 退出 | Presence Report | JSON 全量保存 |
+| 重新启动 | 空间恢复 | 生命继续生长 |
 
-# 创建虚拟环境
-python -m venv .venv
+---
 
-# 激活虚拟环境
-# Windows:
-.venv\Scripts\activate
-# macOS / Linux:
-source .venv/bin/activate
+## 颜色系统
 
-# 安装依赖
-pip install -r requirements.txt
-```
+| 角色 | 色值 | 用途 |
+|------|------|------|
+| Background | `(100, 140, 220)` | 背景粒子 |
+| Interaction | `(140, 120, 230)` | 交互粒子 |
+| Highlight | `(255, 200, 100)` | 高亮粒子 |
+| Hand Left | `(255, 150, 255)` | 左手光环 |
+| Hand Right | `(255, 200, 100)` | 右手光环 |
+| Life | `(80, 140, 255)` | 有机体核心（旧枝） |
+| Memory | `(160, 120, 240)` | 种子 + 连接线 |
+| Energy | `(255, 210, 80)` | 碎片 + 能量条 + 充能环 |
+| Growth | `(240, 240, 255)` | 新生枝端（白色） |
 
-### 依赖
+---
+
+## 性能
+
+| 指标 | 值 |
+|------|-----|
+| 总粒子 | 1280（BG 800 / INT 400 / HL 80） |
+| 帧率 | 60 FPS |
+| 流场 | 52×29 cells，每 3 帧更新 |
+| DLA | 40 walkers/帧，O(1) 碰撞 |
+| MediaPipe | 每 2 帧处理 |
+| 最大有机体 | 8 |
+| 最大涟漪 | 25 |
+| 最大碎片 | 15 |
+| 自动保存 | 每 30 秒 |
+
+---
+
+## 调试
+
+| 按键 | 功能 |
+|------|------|
+| `D` | 完整调试面板 |
+| `F` | FPS 角标 |
+| `R` | Debug/Release 切换 |
+| `Q` | 退出 + Presence Report |
+
+**调试面板内容：** FPS + 帧耗时 + FPS 火花图 · 空间状态 · 时间段 · 粒子数（分 BG/INT/HL） · 有机体/种子/生长点数 · 能量条 · 手部位置/速度 · 当前手势 + 置信度 · 活跃能力 + 状态 + 情绪
+
+---
+
+## 依赖
 
 ```
 mediapipe
 opencv-python
-python-osc
 py5
 numpy
 ```
 
 ---
 
-## 运行
-
-需要**同时运行两个进程**（两个终端窗口）：
-
-```bash
-# 终端 1 — 手部追踪（摄像头 + AI）
-cd python_tracker
-python main.py
-
-# 终端 2 — 视觉渲染（粒子系统）
-cd py5_visual
-python main.py
-```
-
-**可选参数：**
-
-```bash
-# 追踪端
-python main.py --no-debug          # 关闭摄像头预览窗口
-python main.py --osc-port 12001    # 自定义 OSC 端口
-
-# 渲染端
-python main.py --osc-port 12001    # 匹配追踪端的 OSC 端口
-```
-
-**退出：** 追踪端按 `q`，渲染端按 `ESC` 或关闭窗口。
-
----
-
-## 交互行为
-
-| 用户行为 | 空间状态 | V2 视觉效果 | V3 数字生命 |
-|----------|----------|------------|------------|
-| 无人 | **IDLE** | 深蓝粒子缓慢漂浮 | 能量衰减，生命停止生长 |
-| 手出现，缓慢移动 | **ACTIVE** | 蓝紫粒子向手聚拢 | 能量增加，生命可生长 |
-| 快速挥手 | **EXCITED** | 金色长尾迹爆发 | 能量快速增长 |
-| **手停留 >2s** | ACTIVE | — | 🌱 **种下记忆种子** |
-| **继续停留** | ACTIVE | — | 🔬 种子生长为分枝结构 |
-| 停下不动 | **CALM** | 空间逐渐恢复平静 | 生命继续缓慢生长 |
-| 手离开 | **IDLE** | 回归无人状态 | 生命体留在原地 |
-| **关闭重开** | — | — | 💾 **空间恢复，生命继续** |
-
-**速度驱动视觉：**
-
-- 🐢 **缓慢移动** → 空间平静，微弱尾迹，能量缓慢积累
-- 🐇 **快速挥手** → 空间明显被扰动，长尾迹，强辉光，能量快速增长
-- 🧘 **静止停留** → 种下种子，能量转化为生长，数字生命诞生
-
----
-
-## 测试
-
-```bash
-# 测试 OSC 通信（无需渲染端）
-cd python_tracker
-python test_osc_receiver.py
-# 然后在另一个终端运行追踪端，应看到手部数据打印
-```
-
-### 调试开关
-
-在 [config.py](py5_visual/config.py) 中：
-
-- `FLOW_ENABLED = False` — 关闭流场（粒子不漂移）
-- `INFLUENCE_ENABLED = False` — 关闭手部影响
-- `DEBUG_SHOW_STATUS = False` — 隐藏状态叠加层
-- `VIGNETTE_ENABLED = False` — 关闭暗角
-
----
-
-## 颜色系统
-
-统一色板，不使用随机颜色：
-
-| 角色 | 颜色 | 用途 |
-|------|------|------|
-| Background | 深蓝 `(100, 140, 220)` | Layer 1 — 空间基底 |
-| Interaction | 蓝紫 `(140, 120, 230)` | Layer 2 — 主要交互 |
-| Highlight | 暖金 `(255, 200, 100)` | Layer 3 — 高亮尾迹 |
-| Left Hand | 品红 `(255, 150, 255)` | 左手光环 |
-| Right Hand | 暖金 `(255, 200, 100)` | 右手光环 |
-| Core | 纯白 `(255, 255, 255)` | 粒子中心灼热点 |
-| **V3 Life** | 生命蓝 `(80, 140, 255)` | 生命体核心 |
-| **V3 Memory** | 记忆紫 `(160, 120, 240)` | 种子 + 连接线 |
-| **V3 Energy** | 能量金 `(255, 210, 80)` | 能量指示 |
-| **V3 Growth** | 生长白 `(240, 240, 255)` | 新生枝端 |
-
-颜色根据**生命周期阶段**、**当前速度**、**与手的距离**、**昼夜时间**动态变化。
-
----
-
-## 性能
-
-| 指标 | V3 数值 |
-|------|---------|
-| 总粒子数 | 1280（800+400+80） |
-| 每帧 draw calls | ~3,100（优化后） |
-| DLA walkers/帧 | 25 |
-| 最大生命体数 | 8 |
-| 目标帧率 | 60 FPS |
-| 自动保存间隔 | 30 秒 |
-| 昼夜周期 | 5 分钟 |
-
----
-
 ## 路线图
 
-### V3 — Digital Organism（数字生命）← ✅ 已完成
-
-- ✅ DLA 扩散限制聚合生长
-- ✅ 记忆种子系统
-- ✅ 统一能量系统
-- ✅ 行为统计分析
-- ✅ 昼夜循环
-- ✅ JSON 持久化
-- ✅ 数字生态系统规则
-
-### V4 — AI Narrative（AI 叙事）← 远期规划
-
-- 行为分析：识别手势语义
-- AI 驱动的空间叙事生成
-- 声音交互：麦克风输入驱动空间脉动
-- 多设备联动
-- 多人交互
+| 版本 | 主题 | 状态 |
+|------|------|------|
+| V1 | 基础交互 | ✅ |
+| V2 | 响应式空间 | ✅ |
+| V3 | 数字生命 | ✅ |
+| V4 | 空间手势语言 | ✅ |
+| V5 | 声音 / AI / 多人 | 🔮 |
 
 ---
 
@@ -499,10 +382,6 @@ python test_osc_receiver.py
 
 仅供学习与艺术创作使用。
 
----
-
 ## 致谢
 
-- [MediaPipe](https://developers.google.com/mediapipe) — Google 开源感知框架
-- [py5](https://py5coding.org/) — Python 创意编程库
-- [Processing](https://processing.org/) — 生成艺术先驱平台
+[MediaPipe](https://developers.google.com/mediapipe) · [py5](https://py5coding.org/) · [Processing](https://processing.org/)
